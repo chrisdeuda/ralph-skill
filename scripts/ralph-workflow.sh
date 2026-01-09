@@ -19,6 +19,12 @@ CONTEXT_FILE="$PLAN_DIR/context.md"
 PROGRESS_FILE="$PLAN_DIR/progress.md"
 TASKS_FILE="$PLAN_DIR/tasks.md"
 
+# Global log file (for watching all plans)
+GLOBAL_LOG="plans/ralph-log.md"
+
+# Extract plan name from path (e.g., "260109-1500-my-feature")
+PLAN_NAME=$(basename "$PLAN_DIR")
+
 # Detect task source: tasks.md OR phase files from /plan
 detect_task_source() {
   if [ -f "$TASKS_FILE" ]; then
@@ -112,7 +118,7 @@ TASK_SOURCE=$(detect_task_source)
 NEXT_TASK=$(get_next_task)
 RALPH_MODEL=$(detect_model "$NEXT_TASK")
 FILE_REFS=$(build_file_refs)
-export TASK_SOURCE NEXT_TASK RALPH_MODEL PLAN_DIR PROGRESS_FILE RALPH_MODE
+export TASK_SOURCE NEXT_TASK RALPH_MODEL PLAN_DIR PROGRESS_FILE RALPH_MODE GLOBAL_LOG PLAN_NAME
 
 # Context instructions (if context.md exists)
 CONTEXT_INSTRUCTIONS=""
@@ -147,9 +153,9 @@ $CONTEXT_INSTRUCTIONS
 2. Find the next incomplete task (unchecked checkbox [ ]). \\
    - If using tasks.md: Look in tasks.md \\
    - If using phases: Look in phase-XX-*.md files in order \\
-3. BEFORE starting, append to progress.md (create if not exists): \\
+3. BEFORE starting, append to BOTH progress.md AND $GLOBAL_LOG (create if not exists): \\
    --- \\
-   ## Task N: [task description] \\
+   ## [$PLAN_NAME] Task N: [task description] \\
    **Status:** In Progress | **Time:** [YYYY-MM-DD HH:MM] | **Model:** $RALPH_MODEL | **Mode:** $RALPH_MODE \\
    ### Plan \\
    - [step 1] \\
