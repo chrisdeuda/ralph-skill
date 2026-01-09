@@ -1,20 +1,23 @@
 #!/bin/bash
 # Run a single Ralph iteration
-# Usage: ralph-once <plan-dir> [model]
+# Usage: ralph-once <plan-dir> [model] [mode]
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ -z "$1" ]; then
-  echo "Usage: ralph-once <plan-dir> [model]"
+  echo "Usage: ralph-once <plan-dir> [model] [mode]"
   echo "Example: ralph-once plans/260109-1430-my-feature/"
+  echo "         ralph-once plans/260109-feature/ sonnet prototype"
   echo "Models: haiku, sonnet, opus (default: auto-detect)"
+  echo "Modes: prototype (fast), production (quality, default)"
   exit 1
 fi
 
 export PLAN_DIR="$1"
 MODEL_OVERRIDE="${2:-}"
+export RALPH_MODE="${3:-production}"
 
 # Verify plan exists
 if [ ! -f "$PLAN_DIR/tasks.md" ]; then
@@ -36,6 +39,7 @@ fi
 echo "=== Ralph Single Task ==="
 echo "Plan: $PLAN_DIR"
 echo "Source: $TASK_SOURCE"
+echo "Mode: $RALPH_MODE"
 echo "Next task: $NEXT_TASK"
 echo "Model: $MODEL (auto-detected: $RALPH_MODEL)"
 echo "========================="

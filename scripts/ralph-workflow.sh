@@ -9,6 +9,10 @@ if [ -z "$PLAN_DIR" ]; then
   exit 1
 fi
 
+# Quality mode: prototype (fast) or production (full quality)
+# Set via: RALPH_MODE=prototype or RALPH_MODE=production (default)
+RALPH_MODE="${RALPH_MODE:-production}"
+
 # File paths
 PLAN_FILE="$PLAN_DIR/plan.md"
 CONTEXT_FILE="$PLAN_DIR/context.md"
@@ -108,7 +112,7 @@ TASK_SOURCE=$(detect_task_source)
 NEXT_TASK=$(get_next_task)
 RALPH_MODEL=$(detect_model "$NEXT_TASK")
 FILE_REFS=$(build_file_refs)
-export TASK_SOURCE NEXT_TASK RALPH_MODEL PLAN_DIR PROGRESS_FILE
+export TASK_SOURCE NEXT_TASK RALPH_MODEL PLAN_DIR PROGRESS_FILE RALPH_MODE
 
 # Context instructions (if context.md exists)
 CONTEXT_INSTRUCTIONS=""
@@ -116,8 +120,28 @@ if [ -f "$CONTEXT_FILE" ]; then
   CONTEXT_INSTRUCTIONS="IMPORTANT: Read context.md FIRST for key files to focus on. This saves exploration time. \\"
 fi
 
+# Quality mode instructions
+MODE_INSTRUCTIONS=""
+if [ "$RALPH_MODE" = "prototype" ]; then
+  MODE_INSTRUCTIONS="MODE: PROTOTYPE - Speed over perfection. Skip edge cases, minimal tests, get it working fast. \\"
+else
+  MODE_INSTRUCTIONS="MODE: PRODUCTION - Quality code required. Full tests, handle edge cases, maintainable code. \\"
+fi
+
+# Build quality-specific steps
+if [ "$RALPH_MODE" = "prototype" ]; then
+  QUALITY_STEPS="6. Skip linting and extensive testing - just verify it works manually or with minimal smoke test. \\"
+else
+  QUALITY_STEPS="6. Run linting if available: npm run lint -- --fix (skip if no lint script) \\
+7. Run unit tests if available: npm test (must pass before completing) \\
+   If tests fail, append: \\
+   - [HH:MM] TEST FAILED: [which test, why] \\
+   - [HH:MM] FIX ATTEMPT: [what you are changing] \\"
+fi
+
 # Main workflow prompt
 RALPH_WORKFLOW="$FILE_REFS \\
+$MODE_INSTRUCTIONS
 $CONTEXT_INSTRUCTIONS
 1. Read the plan files to understand the current state. \\
 2. Find the next incomplete task (unchecked checkbox [ ]). \\
@@ -126,11 +150,13 @@ $CONTEXT_INSTRUCTIONS
 3. BEFORE starting, append to progress.md (create if not exists): \\
    --- \\
    ## Task N: [task description] \\
-   **Status:** In Progress | **Time:** [YYYY-MM-DD HH:MM] | **Model:** $RALPH_MODEL \\
+   **Status:** In Progress | **Time:** [YYYY-MM-DD HH:MM] | **Model:** $RALPH_MODEL | **Mode:** $RALPH_MODE \\
    ### Plan \\
    - [step 1] \\
    - [step 2] \\
-4. Implement the task AND write tests to verify the acceptance criteria (AC). \\
+4. Implement the task. \\
+   - PROTOTYPE: Get it working, skip edge cases, minimal error handling. \\
+   - PRODUCTION: Write tests, handle edge cases, maintainable code. \\
 5. IMPORTANT - Append-only logging: As you work, APPEND to progress.md: \\
    ### Actions \\
    - [HH:MM] [action taken] \\
@@ -138,11 +164,7 @@ $CONTEXT_INSTRUCTIONS
    If something fails or you need to retry: \\
    - [HH:MM] ERROR: [what failed] \\
    - [HH:MM] RETRY: [what you are trying instead] \\
-6. Run linting if available: npm run lint -- --fix (skip if no lint script) \\
-7. Run unit tests if available: npm test (must pass before completing) \\
-   If tests fail, append: \\
-   - [HH:MM] TEST FAILED: [which test, why] \\
-   - [HH:MM] FIX ATTEMPT: [what you are changing] \\
+$QUALITY_STEPS
 8. When done, append to progress.md: \\
    ### Result \\
    **Status:** Completed | **Completed:** [HH:MM] \\
