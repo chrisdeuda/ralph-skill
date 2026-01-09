@@ -35,6 +35,7 @@ fi
 
 echo "=== Ralph Single Task ==="
 echo "Plan: $PLAN_DIR"
+echo "Source: $TASK_SOURCE"
 echo "Next task: $NEXT_TASK"
 echo "Model: $MODEL (auto-detected: $RALPH_MODEL)"
 echo "========================="

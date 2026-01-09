@@ -1,6 +1,7 @@
 #!/bin/bash
 # Shared workflow for Ralph automation
 # Used by: ralph-once.sh, ralph-afk.sh
+# Supports both tasks.md and /plan phase files
 
 # Require PLAN_DIR to be set
 if [ -z "$PLAN_DIR" ]; then
@@ -8,8 +9,27 @@ if [ -z "$PLAN_DIR" ]; then
   exit 1
 fi
 
-TASKS_FILE="$PLAN_DIR/tasks.md"
+# File paths
+PLAN_FILE="$PLAN_DIR/plan.md"
+CONTEXT_FILE="$PLAN_DIR/context.md"
 PROGRESS_FILE="$PLAN_DIR/progress.md"
+TASKS_FILE="$PLAN_DIR/tasks.md"
+
+# Detect task source: tasks.md OR phase files from /plan
+detect_task_source() {
+  if [ -f "$TASKS_FILE" ]; then
+    echo "tasks"
+  elif [ -f "$PLAN_FILE" ]; then
+    echo "phases"
+  else
+    echo "none"
+  fi
+}
+
+# Get phase files sorted
+get_phase_files() {
+  ls "$PLAN_DIR"/phase-*.md 2>/dev/null | sort
+}
 
 # Model selection based on task keywords
 detect_model() {
@@ -28,20 +48,82 @@ detect_model() {
 }
 
 # Get next incomplete task from tasks.md
-get_next_task() {
+get_next_task_from_tasks() {
   grep -m1 "^\- \[ \]" "$TASKS_FILE" 2>/dev/null | sed 's/- \[ \] //' || echo ""
 }
 
+# Get next incomplete task from phase files
+get_next_task_from_phases() {
+  for phase in $(get_phase_files); do
+    task=$(grep -m1 "^\- \[ \]" "$phase" 2>/dev/null | sed 's/- \[ \] //')
+    if [ -n "$task" ]; then
+      echo "$task"
+      return
+    fi
+  done
+  echo ""
+}
+
+# Get next task based on source
+get_next_task() {
+  local source=$(detect_task_source)
+  if [ "$source" = "tasks" ]; then
+    get_next_task_from_tasks
+  elif [ "$source" = "phases" ]; then
+    get_next_task_from_phases
+  else
+    echo ""
+  fi
+}
+
+# Build file references for prompt
+build_file_refs() {
+  local refs=""
+
+  # Always include progress if exists
+  [ -f "$PROGRESS_FILE" ] && refs="$refs @$PROGRESS_FILE"
+
+  # Include context if exists (key files to focus on)
+  [ -f "$CONTEXT_FILE" ] && refs="$refs @$CONTEXT_FILE"
+
+  # Include plan overview
+  [ -f "$PLAN_FILE" ] && refs="$refs @$PLAN_FILE"
+
+  # Include task source
+  local source=$(detect_task_source)
+  if [ "$source" = "tasks" ]; then
+    refs="$refs @$TASKS_FILE"
+  elif [ "$source" = "phases" ]; then
+    # Include all phase files
+    for phase in $(get_phase_files); do
+      refs="$refs @$phase"
+    done
+  fi
+
+  echo "$refs"
+}
+
 # Export for scripts
+TASK_SOURCE=$(detect_task_source)
 NEXT_TASK=$(get_next_task)
 RALPH_MODEL=$(detect_model "$NEXT_TASK")
-export NEXT_TASK RALPH_MODEL TASKS_FILE PROGRESS_FILE
+FILE_REFS=$(build_file_refs)
+export TASK_SOURCE NEXT_TASK RALPH_MODEL PLAN_DIR PROGRESS_FILE
+
+# Context instructions (if context.md exists)
+CONTEXT_INSTRUCTIONS=""
+if [ -f "$CONTEXT_FILE" ]; then
+  CONTEXT_INSTRUCTIONS="IMPORTANT: Read context.md FIRST for key files to focus on. This saves exploration time. \\"
+fi
 
 # Main workflow prompt
-RALPH_WORKFLOW="@$TASKS_FILE @$PROGRESS_FILE \\
-1. Read the tasks.md and progress.md files. \\
-2. Find the next incomplete task (unchecked checkbox). \\
-3. BEFORE starting, append to progress.md using this EXACT format: \\
+RALPH_WORKFLOW="$FILE_REFS \\
+$CONTEXT_INSTRUCTIONS
+1. Read the plan files to understand the current state. \\
+2. Find the next incomplete task (unchecked checkbox [ ]). \\
+   - If using tasks.md: Look in tasks.md \\
+   - If using phases: Look in phase-XX-*.md files in order \\
+3. BEFORE starting, append to progress.md (create if not exists): \\
    --- \\
    ## Task N: [task description] \\
    **Status:** In Progress | **Time:** [YYYY-MM-DD HH:MM] | **Model:** $RALPH_MODEL \\
@@ -49,31 +131,27 @@ RALPH_WORKFLOW="@$TASKS_FILE @$PROGRESS_FILE \\
    - [step 1] \\
    - [step 2] \\
 4. Implement the task AND write tests to verify the acceptance criteria (AC). \\
-5. IMPORTANT - Append-only logging: As you work, APPEND to progress.md (never update/overwrite previous entries): \\
+5. IMPORTANT - Append-only logging: As you work, APPEND to progress.md: \\
    ### Actions \\
    - [HH:MM] [action taken] \\
    - [HH:MM] [file created/modified] \\
    If something fails or you need to retry: \\
    - [HH:MM] ERROR: [what failed] \\
    - [HH:MM] RETRY: [what you are trying instead] \\
-   - [HH:MM] INVESTIGATING: [what you are looking into] \\
-   This creates a thought trail showing your problem-solving process. \\
 6. Run linting if available: npm run lint -- --fix (skip if no lint script) \\
 7. Run unit tests if available: npm test (must pass before completing) \\
    If tests fail, append: \\
    - [HH:MM] TEST FAILED: [which test, why] \\
    - [HH:MM] FIX ATTEMPT: [what you are changing] \\
-8. When done, append to progress.md (do not modify earlier entries): \\
+8. When done, append to progress.md: \\
    ### Result \\
    **Status:** Completed | **Completed:** [HH:MM] \\
    [what was achieved] \\
-   ### Tests \\
-   - [test file]: [N] tests (PASS/FAIL) \\
-9. Mark the task as complete in tasks.md by changing [ ] to [x]. \\
+9. Mark the task as complete by changing [ ] to [x] in the source file. \\
 10. Commit all changes with a descriptive message. \\
 ONLY WORK ON A SINGLE TASK."
 
-# Completion signal for loop detection (unique to avoid false matches)
-RALPH_COMPLETE_MSG='If all tasks in tasks.md are complete (no unchecked boxes remain), output exactly: ALL_TASKS_DONE'
+# Completion signal for loop detection
+RALPH_COMPLETE_MSG='If all tasks are complete (no unchecked boxes remain in any file), output exactly: ALL_TASKS_DONE'
 
 export RALPH_WORKFLOW RALPH_COMPLETE_MSG
