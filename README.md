@@ -80,13 +80,27 @@ ralph-afk plans/260109-1500-my-feature/ 5
 
 ## Plan Structure
 
-Ralph works with task files in your `plans/` directory:
+Ralph supports **two task sources**:
 
+### Option 1: Standalone tasks.md
 ```
 plans/{date}-{slug}/
 ├── tasks.md      # Task checkboxes [ ] and [x]
+├── context.md    # Key files to focus on (optional)
 └── progress.md   # Auto-generated progress log
 ```
+
+### Option 2: /plan phase files (recommended)
+```
+plans/{date}-{slug}/
+├── plan.md              # Overview from /plan command
+├── phase-01-setup.md    # Checkboxes in each phase
+├── phase-02-impl.md
+├── context.md           # Key files (optional, saves tokens)
+└── progress.md          # Ralph's log
+```
+
+Ralph auto-detects which format you're using.
 
 ### tasks.md format
 
@@ -100,6 +114,20 @@ plans/{date}-{slug}/
 - [ ] Second task
   - **AC:** What "done" looks like
 - [x] Completed task (Ralph marks these)
+```
+
+### context.md format (optional, saves exploration tokens)
+
+```markdown
+# Context
+
+## Key Files
+- src/components/Calculator.jsx   # Main component
+- src/components/ButtonGrid.jsx   # Button layout
+
+## Patterns
+- Components use useReducer for state
+- Tests in __tests__/ next to components
 ```
 
 ## Model Selection
