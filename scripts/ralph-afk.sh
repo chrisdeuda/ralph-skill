@@ -1,25 +1,28 @@
 #!/bin/bash
 # Run Ralph in AFK loop mode
-# Usage: ralph-afk <plan-dir> <iterations> [model]
+# Usage: ralph-afk <plan-dir> <iterations> [model] [mode]
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ -z "$1" ] || [ -z "$2" ]; then
-  echo "Usage: ralph-afk <plan-dir> <iterations> [model]"
+  echo "Usage: ralph-afk <plan-dir> <iterations> [model] [mode]"
   echo "Example: ralph-afk plans/260109-1430-my-feature/ 5"
+  echo "         ralph-afk plans/260109-feature/ 10 auto prototype"
   echo "Models: haiku, sonnet, opus, auto (default)"
+  echo "Modes: prototype (fast), production (quality, default)"
   exit 1
 fi
 
 export PLAN_DIR="$1"
 ITERATIONS="$2"
 MODEL_OVERRIDE="${3:-auto}"
+export RALPH_MODE="${4:-production}"
 
 # Verify plan exists
-if [ ! -f "$PLAN_DIR/tasks.md" ]; then
-  echo "Error: $PLAN_DIR/tasks.md not found"
+if [ ! -f "$PLAN_DIR/tasks.md" ] && [ ! -f "$PLAN_DIR/plan.md" ]; then
+  echo "Error: No tasks.md or plan.md found in $PLAN_DIR"
   echo "Run: ralph-init <slug> to create a plan"
   exit 1
 fi
@@ -36,6 +39,7 @@ echo "=== Ralph AFK Mode ==="
 echo "Plan: $PLAN_DIR"
 echo "Iterations: $ITERATIONS"
 echo "Model: $MODEL_OVERRIDE"
+echo "Mode: $RALPH_MODE"
 echo "======================"
 
 for ((i=1; i<=$ITERATIONS; i++)); do
@@ -52,6 +56,7 @@ for ((i=1; i<=$ITERATIONS; i++)); do
   echo "=== Iteration $i of $ITERATIONS ==="
   echo "Task: $NEXT_TASK"
   echo "Model: $MODEL"
+  echo "Mode: $RALPH_MODE"
   echo "=================================="
 
   if [ -z "$NEXT_TASK" ]; then
