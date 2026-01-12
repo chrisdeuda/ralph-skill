@@ -36,6 +36,9 @@ else
   MODEL="$RALPH_MODEL"
 fi
 
+# Load shared utilities
+source "$SCRIPT_DIR/ralph-utils.sh"
+
 echo "=== Ralph Single Task ==="
 echo "Plan: $PLAN_DIR"
 echo "Source: $TASK_SOURCE"
@@ -46,7 +49,10 @@ echo "========================="
 
 if [ -z "$NEXT_TASK" ]; then
   echo "No incomplete tasks found in $PLAN_DIR/tasks.md"
+  notify "Ralph" "No tasks found"
   exit 0
 fi
 
 claude --model "$MODEL" --dangerously-skip-permissions -p "$RALPH_WORKFLOW $RALPH_COMPLETE_MSG"
+
+notify "Ralph Task Done" "Completed: ${NEXT_TASK:0:50}"

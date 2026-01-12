@@ -113,12 +113,19 @@ build_file_refs() {
   echo "$refs"
 }
 
+# Detect if task is a checkpoint (requires manual verification)
+is_checkpoint() {
+  local task="$1"
+  echo "$task" | grep -qiE "CHECKPOINT|manual.*(verify|test|check)|PAUSE"
+}
+
 # Export for scripts
 TASK_SOURCE=$(detect_task_source)
 NEXT_TASK=$(get_next_task)
 RALPH_MODEL=$(detect_model "$NEXT_TASK")
 FILE_REFS=$(build_file_refs)
-export TASK_SOURCE NEXT_TASK RALPH_MODEL PLAN_DIR PROGRESS_FILE RALPH_MODE GLOBAL_LOG PLAN_NAME
+IS_CHECKPOINT=$(is_checkpoint "$NEXT_TASK" && echo "yes" || echo "no")
+export TASK_SOURCE NEXT_TASK RALPH_MODEL PLAN_DIR PROGRESS_FILE RALPH_MODE GLOBAL_LOG PLAN_NAME IS_CHECKPOINT
 
 # Context instructions (if context.md exists)
 CONTEXT_INSTRUCTIONS=""

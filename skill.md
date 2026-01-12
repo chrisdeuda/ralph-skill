@@ -11,8 +11,16 @@ Run AI coding in a loop, letting it work autonomously on a list of tasks from yo
 
 | Mode | Script | Use Case |
 |------|--------|----------|
+| Review | `ralph-review` | Pre-flight check, surface unclear requirements |
 | HITL (human-in-the-loop) | `ralph-once` | Learning, prompt refinement, risky tasks |
 | AFK (away from keyboard) | `ralph-afk` | Bulk work, low-risk tasks, overnight runs |
+
+## Quality Modes
+
+| Mode | Flag | Behavior |
+|------|------|----------|
+| Prototype | `prototype` | Speed over perfection. No tests, no lint, just make it work |
+| Production | `production` | Full quality. Tests, edge cases, maintainable code |
 
 ## Plan Structure
 
@@ -103,19 +111,48 @@ Ralph runs these checks before marking complete:
 2. `npm test` (must pass)
 3. Commits changes with descriptive message
 
+## Recommended Workflow (Validate First)
+
+```
+1. ralph-init my-feature     # Creates plan with prototype-first structure
+2. Edit tasks.md             # Add your tasks, resolve Open Questions
+3. ralph-review <plan>       # Pre-flight: surface unclear requirements
+4. ralph-afk <plan> 5 auto prototype  # Phase 1: Make it work (no tests)
+   → Ralph auto-pauses at CHECKPOINT
+5. Manual test               # Verify it actually works!
+6. ralph-afk <plan> 5 auto production # Phase 2: Add quality (tests, lint)
+```
+
+## Checkpoints
+
+Add `CHECKPOINT:` to any task to force Ralph to pause:
+
+```markdown
+- [ ] CHECKPOINT: Manual verification
+  - **AC:** Manually test the feature works
+  - **PAUSE:** Stop here, verify before Phase 2
+```
+
+Ralph will:
+1. Detect checkpoint task
+2. Log pause to progress.md
+3. Mark checkpoint complete
+4. Exit with instructions for next steps
+
 ## Best Practices
 
-1. **Start HITL, then AFK** - Refine prompt before going hands-off
-2. **Small tasks** - One feature per checkbox, not epics
-3. **Risky tasks first** - Use HITL for architectural decisions
-4. **Cap iterations** - Always limit AFK runs (5-10 small, 30-50 large)
-5. **Delete progress.md after sprint** - It's session-specific
+1. **Prototype first** - Get it working before adding tests
+2. **Use checkpoints** - Pause between prototype and quality phases
+3. **Review PRD first** - Run `ralph-review` to catch unclear requirements
+4. **Small tasks** - One feature per checkbox, not epics
+5. **Cap iterations** - Always limit AFK runs (5-10 small, 30-50 large)
 
 ## Scripts
 
 Run these from any project directory:
 
 - `~/.claude/skills/ralph/scripts/ralph-init.sh` - Initialize plan
+- `~/.claude/skills/ralph/scripts/ralph-review.sh` - Review PRD for unclear requirements
 - `~/.claude/skills/ralph/scripts/ralph-once.sh` - Single iteration
 - `~/.claude/skills/ralph/scripts/ralph-afk.sh` - AFK loop
 - `~/.claude/skills/ralph/scripts/ralph-workflow.sh` - Shared workflow
@@ -127,6 +164,7 @@ Add to your shell profile (~/.zshrc or ~/.bashrc):
 ```bash
 # Ralph aliases
 alias ralph-init="~/.claude/skills/ralph/scripts/ralph-init.sh"
+alias ralph-review="~/.claude/skills/ralph/scripts/ralph-review.sh"
 alias ralph-once="~/.claude/skills/ralph/scripts/ralph-once.sh"
 alias ralph-afk="~/.claude/skills/ralph/scripts/ralph-afk.sh"
 ```

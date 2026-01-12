@@ -27,13 +27,8 @@ if [ ! -f "$PLAN_DIR/tasks.md" ] && [ ! -f "$PLAN_DIR/plan.md" ]; then
   exit 1
 fi
 
-# Notification helper (macOS)
-notify() {
-  local title="$1"
-  local msg="$2"
-  say "$msg" 2>/dev/null &
-  osascript -e "display notification \"$msg\" with title \"$title\"" 2>/dev/null || true
-}
+# Load shared utilities
+source "$SCRIPT_DIR/ralph-utils.sh"
 
 echo "=== Ralph AFK Mode ==="
 echo "Plan: $PLAN_DIR"
@@ -57,11 +52,40 @@ for ((i=1; i<=$ITERATIONS; i++)); do
   echo "Task: $NEXT_TASK"
   echo "Model: $MODEL"
   echo "Mode: $RALPH_MODE"
+  echo "Checkpoint: $IS_CHECKPOINT"
   echo "=================================="
 
   if [ -z "$NEXT_TASK" ]; then
     echo "No more tasks found."
     notify "Ralph Complete" "All tasks done!"
+    exit 0
+  fi
+
+  # CHECKPOINT DETECTION - pause for manual verification
+  if [ "$IS_CHECKPOINT" = "yes" ]; then
+    echo ""
+    echo "⚠️  CHECKPOINT DETECTED: $NEXT_TASK"
+    echo "This task requires manual verification before continuing."
+    echo ""
+    notify "Ralph Checkpoint" "Manual verification needed!"
+
+    # Mark checkpoint as complete and log it
+    claude --model haiku --dangerously-skip-permissions -p "@$PROGRESS_FILE @$TASKS_FILE
+    This is a CHECKPOINT task. Do the following:
+    1. Append to progress.md:
+       ---
+       ## CHECKPOINT: Manual Verification
+       **Time:** $(date +'%Y-%m-%d %H:%M')
+       **Status:** Paused for manual testing
+       Please verify Phase 1 works correctly before running Phase 2.
+    2. Mark the checkpoint task as [x] complete in tasks.md
+    3. Output: CHECKPOINT_COMPLETE"
+
+    echo ""
+    echo "✋ Ralph paused at checkpoint."
+    echo "   1. Test the feature manually"
+    echo "   2. If working: ralph-afk $PLAN_DIR $((ITERATIONS-i)) $MODEL_OVERRIDE production"
+    echo "   3. If broken: Fix issues, then re-run prototype phase"
     exit 0
   fi
 

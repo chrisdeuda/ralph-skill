@@ -74,20 +74,33 @@ if [ ! -f "$PLAN_DIR/tasks.md" ] && [ ! -f "$PLAN_DIR/plan.md" ]; then
   cat > "$PLAN_DIR/tasks.md" << EOF
 # $DESC
 
-## Overview
-<!-- Brief description of the feature/task -->
+## Open Questions
+<!-- RESOLVE BEFORE STARTING - Run: ralph-review $PLAN_DIR -->
+- [ ] Q1: [Question about unclear requirement]
 
-## Tasks
+## Phase 1: Prototype (Make It Work)
+<!-- NO tests, NO lint, just working code -->
+<!-- Run: ralph-afk $PLAN_DIR 5 auto prototype -->
 
-<!-- Add tasks with acceptance criteria -->
-- [ ] Task 1 description
-  - **AC:** Acceptance criteria here
+- [ ] Core implementation
+  - **AC:** Basic functionality works (console.log verification OK)
 
-- [ ] Task 2 description
-  - **AC:** What "done" looks like
+- [ ] CHECKPOINT: Manual verification
+  - **AC:** Manually test the feature works as expected
+  - **PAUSE:** Stop Ralph here, verify before Phase 2
+
+## Phase 2: Quality (After Verified)
+<!-- ONLY run after Phase 1 verified manually -->
+<!-- Run: ralph-afk $PLAN_DIR 5 auto production -->
+
+- [ ] Add unit tests
+  - **AC:** Core paths covered, tests pass
+
+- [ ] Add error handling
+  - **AC:** Edge cases handled gracefully
 
 ## Notes
-<!-- Any additional context for Ralph -->
+<!-- Context for Ralph -->
 EOF
   echo "Created: $PLAN_DIR/tasks.md"
 fi
