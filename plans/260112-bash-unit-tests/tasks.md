@@ -11,7 +11,7 @@
 - [x] Create ralph-kill script to cleanup Claude processes
   - **AC:** `ralph-kill` kills only Claude processes spawned by Ralph (tracks PIDs, not all claude)
 
-- [ ] Install BATS testing framework
+- [x] Install BATS testing framework
   - **AC:** `bats --version` works, test runner available
 
 - [ ] Create test directory structure
