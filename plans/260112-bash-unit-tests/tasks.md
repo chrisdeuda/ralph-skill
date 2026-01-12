@@ -38,7 +38,7 @@
 - [x] Add tests for build_file_refs()
   - **AC:** Tests: includes CLAUDE.md, progress, tasks files
 
-- [ ] Add tests for build_session_name()
+- [x] Add tests for build_session_name()
   - **AC:** Tests: format "[Ralph] slug: T1 - preview"
 
 - [ ] Add CI integration (GitHub Actions)

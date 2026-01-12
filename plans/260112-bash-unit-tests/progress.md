@@ -195,3 +195,38 @@ Comprehensive test suite for build_file_refs() completed with 23 test cases cove
 - Format validation: @-prefixed references with proper spacing
 - Edge cases: missing files gracefully skipped, multiple phases in order
 - All 80 tests passing across four test suites
+
+---
+
+## [260112-bash-unit-tests] Task 11: Add tests for build_session_name()
+**Status:** In Progress | **Time:** 2026-01-12 17:00 | **Model:** haiku | **Mode:** production
+
+### Plan
+- Create test-build-session-name.bats file in tests/ directory
+- Test build_session_name() which formats session names for Claude picker display
+- Test scenarios:
+  - Format: "[Ralph] plan-slug: T1 - task preview"
+  - Counts completed tasks from tasks.md
+  - Includes first 40 characters of next task
+  - Handles empty task descriptions
+  - Handles long task descriptions (truncates to 40 chars)
+  - Uses correct task number based on completed count
+  - Handles special characters in plan name
+  - Works with various plan naming formats
+- Handle edge cases and verify all tests pass
+
+### Actions
+- 17:00 Created test-build-session-name.bats with 23 comprehensive test cases
+- 17:00 Tests verify format, task numbering, task preview, truncation, special chars
+- 17:00 Ran all 103 tests (detect_model 10 + is_checkpoint 20 + get_next_task 27 +
+         build_file_refs 23 + build_session_name 23) - all passing
+
+### Result
+**Status:** Completed | **Completed:** 17:00
+Comprehensive test suite for build_session_name() completed with 23 test cases covering:
+- Session format validation: "[Ralph] plan: TN - preview" structure
+- Task numbering: counts completed tasks, increments correctly
+- Task preview: first 40 characters, truncation, special characters
+- Plan name handling: numeric names, kebab-case, special chars
+- Edge cases: empty tasks, mixed tasks, malformed markers
+- All 103 tests passing across five test suites
