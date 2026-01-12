@@ -130,9 +130,10 @@ build_file_refs() {
 }
 
 # Detect if task is a checkpoint (requires manual verification)
+# Must start with "CHECKPOINT" or contain "PAUSE:" to avoid false positives
 is_checkpoint() {
   local task="$1"
-  echo "$task" | grep -qiE "CHECKPOINT|manual.*(verify|test|check)|PAUSE"
+  echo "$task" | grep -qE "^CHECKPOINT|PAUSE:|manual.*(verify|test|check)"
 }
 
 # Export for scripts

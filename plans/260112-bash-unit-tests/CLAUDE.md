@@ -7,8 +7,7 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
-| #4604 | 4:53 PM | ✅ | Committed detect_model() test suite implementation | ~302 |
-| #4602 | " | ✅ | Task 4 marked complete in tasks.md checklist | ~261 |
-| #4600 | 4:52 PM | ✅ | Task 4 completed and documented in progress log | ~260 |
-| #4595 | " | ✅ | Task 4 initiated to test detect_model() function | ~284 |
+| #4618 | 4:56 PM | 🟣 | BATS unit testing framework integrated for Ralph bash scripts | ~375 |
+| #4613 | 4:54 PM | 🟣 | CHECKPOINT paused bash unit tests plan at Phase 1 completion | ~321 |
+| #4571 | 4:50 PM | 🟣 | PID tracking implementation for Ralph-spawned Claude processes | ~348 |
 </claude-mem-context>
