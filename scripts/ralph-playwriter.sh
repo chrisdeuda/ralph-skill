@@ -129,7 +129,22 @@ show_patterns() {
   echo -e "${YELLOW}💾 Store State Between Calls${NC}"
   echo '  state.myData = someValue;  // persists across execute calls'
   echo ""
+  echo -e "${YELLOW}🔢 Validate Dynamic Display (calculators, counters)${NC}"
+  echo '  // Button refs stable (e8-e33), display refs change'
+  echo '  const snap = await accessibilitySnapshot({ page, search: /generic.*"/ });'
+  echo '  // Extract value: generic [ref=eX]: "42"'
+  echo ""
+  echo -e "${YELLOW}✅ Multi-Step Validation Pattern${NC}"
+  echo '  // Click sequence, then verify'
+  echo '  await page.locator("aria-ref=e26").click(); // 1'
+  echo '  await page.locator("aria-ref=e29").click(); // +'
+  echo '  await page.locator("aria-ref=e27").click(); // 2'
+  echo '  await page.locator("aria-ref=e32").click(); // ='
+  echo '  const result = await accessibilitySnapshot({ page });'
+  echo '  // Check result.full for expected value'
+  echo ""
   echo -e "${GREEN}TIP: Use screenshotWithAccessibilityLabels first to get aria-ref IDs${NC}"
+  echo -e "${GREEN}TIP: Button aria-refs are stable; display refs change per interaction${NC}"
 }
 
 # Generate Playwright code template (legacy)
