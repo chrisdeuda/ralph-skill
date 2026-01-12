@@ -18,6 +18,8 @@ PLAN_FILE="$PLAN_DIR/plan.md"
 CONTEXT_FILE="$PLAN_DIR/context.md"
 PROGRESS_FILE="$PLAN_DIR/progress.md"
 TASKS_FILE="$PLAN_DIR/tasks.md"
+ERRORS_LOG="$PLAN_DIR/errors.log"
+ACTIVITY_LOG="$PLAN_DIR/activity.log"
 
 # Global log file (for watching all plans)
 GLOBAL_LOG="plans/ralph-log.md"
@@ -99,12 +101,18 @@ build_session_name() {
   echo "[Ralph] $PLAN_NAME: T$task_num - $task_preview"
 }
 
+# Global guardrails file (append-only failure log)
+GUARDRAILS_FILE="$RALPH_SKILL_DIR/guardrails.md"
+
 # Build file references for prompt
 build_file_refs() {
   local refs=""
 
   # ALWAYS include Ralph design philosophy first
   [ -f "$RALPH_SKILL_DIR/CLAUDE.md" ] && refs="@$RALPH_SKILL_DIR/CLAUDE.md"
+
+  # Include global guardrails (failures to avoid)
+  [ -f "$GUARDRAILS_FILE" ] && refs="$refs @$GUARDRAILS_FILE"
 
   # Always include progress if exists
   [ -f "$PROGRESS_FILE" ] && refs="$refs @$PROGRESS_FILE"
@@ -143,7 +151,7 @@ RALPH_MODEL=$(detect_model "$NEXT_TASK")
 FILE_REFS=$(build_file_refs)
 SESSION_NAME=$(build_session_name)
 IS_CHECKPOINT=$(is_checkpoint "$NEXT_TASK" && echo "yes" || echo "no")
-export TASK_SOURCE NEXT_TASK RALPH_MODEL PLAN_DIR PROGRESS_FILE TASKS_FILE RALPH_MODE GLOBAL_LOG PLAN_NAME IS_CHECKPOINT SESSION_NAME
+export TASK_SOURCE NEXT_TASK RALPH_MODEL PLAN_DIR PROGRESS_FILE TASKS_FILE RALPH_MODE GLOBAL_LOG PLAN_NAME IS_CHECKPOINT SESSION_NAME GUARDRAILS_FILE ERRORS_LOG ACTIVITY_LOG
 
 # Context instructions (if context.md exists)
 CONTEXT_INSTRUCTIONS=""
@@ -192,13 +200,20 @@ $CONTEXT_INSTRUCTIONS
 4. Implement the task. \\
    - PROTOTYPE: Get it working, skip edge cases, minimal error handling. \\
    - PRODUCTION: Write tests, handle edge cases, maintainable code. \\
-5. IMPORTANT - Append-only logging: As you work, APPEND to progress.md: \\
-   ### Actions \\
-   - [HH:MM] [action taken] \\
-   - [HH:MM] [file created/modified] \\
-   If something fails or you need to retry: \\
-   - [HH:MM] ERROR: [what failed] \\
-   - [HH:MM] RETRY: [what you are trying instead] \\
+5. LOGGING (append-only): \\
+   a) progress.md - Task status only: \\
+      - [HH:MM] Started: [task description] \\
+      - [HH:MM] Completed: [result summary] \\
+   b) activity.log - Tool usage (create if not exists): \\
+      [HH:MM] READ: [file] \\
+      [HH:MM] EDIT: [file] - [what changed] \\
+      [HH:MM] BASH: [command] \\
+   c) errors.log - When things fail (create if not exists): \\
+      [HH:MM] ERROR: [what failed] \\
+      [HH:MM] CAUSE: [why it failed] \\
+      [HH:MM] FIX: [how you fixed it] \\
+   d) $RALPH_SKILL_DIR/guardrails.md - For significant failures that should NEVER repeat: \\
+      - [YYYY-MM-DD] **Category:** DO NOT [mistake] - [why it's bad] \\
 $QUALITY_STEPS
 8. When done, append to progress.md: \\
    ### Result \\

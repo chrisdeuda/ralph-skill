@@ -9,9 +9,6 @@
 |----|------|---|-------|------|
 | #4715 | 5:37 PM | 🟣 | Comprehensive Bash Unit Tests for Ralph Scripts | ~431 |
 | #4701 | 5:08 PM | 🟣 | Comprehensive BATS Unit Test Suite for Ralph Bash Scripts | ~568 |
+| #4698 | " | 🟣 | Comprehensive BATS test suite completed with CI integration for all Ralph workflow functions | ~386 |
 | #4696 | 5:07 PM | 🟣 | Complete bash unit test suite for Ralph workflow functions | ~463 |
-| #4695 | " | 🟣 | Comprehensive BATS test suite for Ralph bash scripts with 103 passing tests | ~443 |
-| #4618 | 4:56 PM | 🟣 | BATS unit testing framework integrated for Ralph bash scripts | ~375 |
-| #4613 | 4:54 PM | 🟣 | CHECKPOINT paused bash unit tests plan at Phase 1 completion | ~321 |
-| #4571 | 4:50 PM | 🟣 | PID tracking implementation for Ralph-spawned Claude processes | ~348 |
 </claude-mem-context>
