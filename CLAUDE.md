@@ -52,3 +52,27 @@ Real case: Tests passed (5/5) but API was wrong. Hours wasted.
 - `docs/phases.md` - Why Prototype → Checkpoint → Quality
 - `docs/task-structure.md` - Required task file format
 - `docs/learnings.md` - Key lessons from real projects
+
+## Multi-Machine Setup
+
+When user mentions "air" or "MacBook Air", use SSH to sync:
+
+```bash
+# SSH to MacBook Air
+ssh air "command here"
+
+# Sync Ralph skill
+ssh air "cd ~/.claude/skills/ralph && git pull origin master"
+
+# Add MCP via Python (claude CLI not in SSH PATH)
+ssh air 'python3 -c "
+import json
+with open(\"/Users/chrisdeuda/.claude.json\", \"r\") as f:
+    config = json.load(f)
+config[\"mcpServers\"][\"mcp_name\"] = {\"type\": \"stdio\", \"command\": \"npx\", \"args\": [\"pkg@latest\"]}
+with open(\"/Users/chrisdeuda/.claude.json\", \"w\") as f:
+    json.dump(config, f, indent=2)
+"'
+```
+
+Note: Syncthing often stops on Air - use SSH as fallback.
