@@ -160,3 +160,38 @@ Comprehensive test suite for get_next_task() and related functions completed wit
 - Edge cases: special characters, whitespace handling, malformed lines
 - Fixed bug in detect_task_source() to properly detect phase files
 - All 57 tests passing across three test suites
+
+---
+
+## [260112-bash-unit-tests] Task 10: Add tests for build_file_refs()
+**Status:** In Progress | **Time:** 2026-01-12 16:59 | **Model:** haiku | **Mode:** production
+
+### Plan
+- Create test-build-file-refs.bats file in tests/ directory
+- Test build_file_refs() which builds @-prefixed file references for Claude prompts
+- Test scenarios:
+  - Always includes Ralph CLAUDE.md first
+  - Includes progress.md when it exists
+  - Includes context.md when it exists
+  - Includes plan.md when it exists
+  - Includes tasks.md when using tasks source
+  - Includes all phase-*.md files when using phases source
+  - Handles missing files gracefully
+  - Returns files in correct order
+  - Properly formats @-prefixed references
+- Handle edge cases and verify all tests pass
+
+### Actions
+- 16:59 Created test-build-file-refs.bats with 23 comprehensive test cases
+- 16:59 Fixed refs_contains() helper to handle full paths with grep
+- 16:59 Ran all 80 tests (detect_model 10 + is_checkpoint 20 + get_next_task 27 + build_file_refs 23) - all passing
+
+### Result
+**Status:** Completed | **Completed:** 16:59
+Comprehensive test suite for build_file_refs() completed with 23 test cases covering:
+- File inclusion: CLAUDE.md always included, progress/context/plan/tasks/phase files conditional
+- File ordering: Ralph CLAUDE.md first, then progress, context, plan, then tasks or phases
+- Source detection: tasks.md vs phase files properly handled
+- Format validation: @-prefixed references with proper spacing
+- Edge cases: missing files gracefully skipped, multiple phases in order
+- All 80 tests passing across four test suites

@@ -35,7 +35,7 @@
 - [x] Add tests for get_next_task()
   - **AC:** Tests: finds unchecked task, skips checked, returns empty when done
 
-- [ ] Add tests for build_file_refs()
+- [x] Add tests for build_file_refs()
   - **AC:** Tests: includes CLAUDE.md, progress, tasks files
 
 - [ ] Add tests for build_session_name()
