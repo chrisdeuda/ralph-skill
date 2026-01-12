@@ -89,6 +89,15 @@ get_next_task() {
 # Ralph skill directory (for CLAUDE.md)
 RALPH_SKILL_DIR="$HOME/.claude/skills/ralph"
 
+# Build session name for Claude picker display
+# Format: [Ralph] plan-slug: Task N - first 40 chars of task
+build_session_name() {
+  local task_num=$(grep -c "^\- \[x\]" "$TASKS_FILE" 2>/dev/null || echo "0")
+  task_num=$((task_num + 1))
+  local task_preview="${NEXT_TASK:0:40}"
+  echo "[Ralph] $PLAN_NAME: T$task_num - $task_preview"
+}
+
 # Build file references for prompt
 build_file_refs() {
   local refs=""
@@ -130,8 +139,9 @@ TASK_SOURCE=$(detect_task_source)
 NEXT_TASK=$(get_next_task)
 RALPH_MODEL=$(detect_model "$NEXT_TASK")
 FILE_REFS=$(build_file_refs)
+SESSION_NAME=$(build_session_name)
 IS_CHECKPOINT=$(is_checkpoint "$NEXT_TASK" && echo "yes" || echo "no")
-export TASK_SOURCE NEXT_TASK RALPH_MODEL PLAN_DIR PROGRESS_FILE RALPH_MODE GLOBAL_LOG PLAN_NAME IS_CHECKPOINT
+export TASK_SOURCE NEXT_TASK RALPH_MODEL PLAN_DIR PROGRESS_FILE TASKS_FILE RALPH_MODE GLOBAL_LOG PLAN_NAME IS_CHECKPOINT SESSION_NAME
 
 # Context instructions (if context.md exists)
 CONTEXT_INSTRUCTIONS=""
@@ -160,8 +170,10 @@ else
    - [HH:MM] FIX ATTEMPT: [what you are changing] \\"
 fi
 
-# Main workflow prompt
-RALPH_WORKFLOW="$FILE_REFS \\
+# Main workflow prompt (SESSION_NAME first for readable session picker display)
+RALPH_WORKFLOW="$SESSION_NAME
+
+$FILE_REFS \\
 $MODE_INSTRUCTIONS
 $CONTEXT_INSTRUCTIONS
 1. Read the plan files to understand the current state. \\

@@ -57,7 +57,10 @@ for ((i=1; i<=$ITERATIONS; i++)); do
 
   if [ -z "$NEXT_TASK" ]; then
     echo "No more tasks found."
-    notify "Ralph Complete" "All tasks done!"
+    COMPLETED_COUNT=$(grep -c "^\- \[x\]" "$TASKS_FILE" 2>/dev/null || echo "0")
+    notify "Ralph Complete ✅" "Plan: $PLAN_NAME
+Tasks completed: $COMPLETED_COUNT
+All tasks done!"
     exit 0
   fi
 
@@ -123,11 +126,20 @@ EOF
   if [[ "$result" == *"ALL_TASKS_DONE"* ]]; then
     echo ""
     echo "All tasks complete after $i iterations."
-    notify "Ralph Complete" "All tasks done!"
+    COMPLETED_COUNT=$(grep -c "^\- \[x\]" "$TASKS_FILE" 2>/dev/null || echo "0")
+    notify "Ralph Complete ✅" "Plan: $PLAN_NAME
+Tasks completed: $COMPLETED_COUNT
+Iterations used: $i of $ITERATIONS
+All tasks done!"
     exit 0
   fi
 done
 
 echo ""
 echo "Reached iteration limit ($ITERATIONS). Check progress.md for status."
-notify "Ralph Done" "Iteration limit reached"
+COMPLETED_COUNT=$(grep -c "^\- \[x\]" "$TASKS_FILE" 2>/dev/null || echo "0")
+REMAINING_COUNT=$(grep -c "^\- \[ \]" "$TASKS_FILE" 2>/dev/null || echo "0")
+notify "Ralph Paused ⏸️" "Plan: $PLAN_NAME
+Completed: $COMPLETED_COUNT tasks
+Remaining: $REMAINING_COUNT tasks
+Iteration limit ($ITERATIONS) reached"

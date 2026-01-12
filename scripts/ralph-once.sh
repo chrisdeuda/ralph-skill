@@ -49,10 +49,16 @@ echo "========================="
 
 if [ -z "$NEXT_TASK" ]; then
   echo "No incomplete tasks found in $PLAN_DIR/tasks.md"
-  notify "Ralph" "No tasks found"
+  COMPLETED_COUNT=$(grep -c "^\- \[x\]" "$TASKS_FILE" 2>/dev/null || echo "0")
+  notify "Ralph ✅" "Plan: $PLAN_NAME
+All $COMPLETED_COUNT tasks already complete!"
   exit 0
 fi
 
 claude --model "$MODEL" --dangerously-skip-permissions -p "$RALPH_WORKFLOW $RALPH_COMPLETE_MSG"
 
-notify "Ralph Task Done" "Completed: ${NEXT_TASK:0:50}"
+COMPLETED_COUNT=$(grep -c "^\- \[x\]" "$TASKS_FILE" 2>/dev/null || echo "0")
+REMAINING_COUNT=$(grep -c "^\- \[ \]" "$TASKS_FILE" 2>/dev/null || echo "0")
+notify "Ralph Task Done ✅" "Plan: $PLAN_NAME
+Completed: ${NEXT_TASK:0:40}
+Progress: $COMPLETED_COUNT done, $REMAINING_COUNT remaining"
