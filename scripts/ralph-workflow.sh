@@ -86,9 +86,15 @@ get_next_task() {
   fi
 }
 
+# Ralph skill directory (for CLAUDE.md)
+RALPH_SKILL_DIR="$HOME/.claude/skills/ralph"
+
 # Build file references for prompt
 build_file_refs() {
   local refs=""
+
+  # ALWAYS include Ralph design philosophy first
+  [ -f "$RALPH_SKILL_DIR/CLAUDE.md" ] && refs="@$RALPH_SKILL_DIR/CLAUDE.md"
 
   # Always include progress if exists
   [ -f "$PROGRESS_FILE" ] && refs="$refs @$PROGRESS_FILE"
