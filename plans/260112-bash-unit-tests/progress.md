@@ -30,3 +30,23 @@ Started: 2026-01-12 16:36
 ### Result
 **Status:** Completed | **Completed:** 16:50
 BATS testing framework successfully installed and verified. Test runner available for Phase 1 implementation.
+
+---
+
+## [260112-bash-unit-tests] Task 3: Create test directory structure
+**Status:** In Progress | **Time:** 2026-01-12 16:51 | **Model:** haiku | **Mode:** prototype
+
+### Plan
+- Create tests/ directory in the ralph project root
+- Create test_helper.bash for shared test setup/utilities
+- Structure directory to hold test-*.bats files
+
+### Actions
+- 16:51 Created: tests/ directory
+- 16:51 Created: tests/test_helper.bash with setup/teardown functions
+
+### Result
+**Status:** Completed | **Completed:** 16:51
+Test directory structure created. Ready for writing test-*.bats files in Phase 1.
+- tests/ directory for all test files
+- test_helper.bash provides shared setup (sources ralph-workflow.sh, temp directory management)

@@ -14,7 +14,7 @@
 - [x] Install BATS testing framework
   - **AC:** `bats --version` works, test runner available
 
-- [ ] Create test directory structure
+- [x] Create test directory structure
   - **AC:** tests/ folder with test helper setup
 
 - [ ] Write first test for detect_model()
