@@ -14,7 +14,7 @@ Test that Ralph correctly writes to activity.log, errors.log, and guardrails.md
 - [x] Try to read a non-existent file to test error logging
   - **AC:** Error logged to errors.log with CAUSE and FIX
 
-- [ ] CHECKPOINT: Verify logs are working
+- [x] CHECKPOINT: Verify logs are working
   - **AC:** activity.log has READ/EDIT/BASH entries, errors.log has the failed read
   - **PAUSE:** Manual verification of logging system
 
