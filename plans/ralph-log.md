@@ -19,3 +19,16 @@
 - Execute scripts/hello.sh using bash
 - Verify output shows "Hello Ralph"
 - Log the execution to activity.log
+
+---
+
+## [260112-test-logging-feature] Task 3: Try to read a non-existent file to test error logging
+**Status:** Completed | **Time:** 2026-01-12 17:45 | **Model:** haiku | **Mode:** prototype
+
+### Plan
+- Attempt to read a file that doesn't exist
+- Capture the error output
+- Verify error is logged to errors.log with CAUSE and FIX sections
+
+### Result
+Successfully tested error logging. Attempted to read non-existent file at /Users/chrisdeuda/ClaudeSync/.claude/skills/ralph/non-existent-file.txt, which correctly triggered an error (exit code 1). Created errors.log with proper CAUSE (file doesn't exist) and FIX (error expected for testing) sections.

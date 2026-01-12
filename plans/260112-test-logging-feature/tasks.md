@@ -11,7 +11,7 @@ Test that Ralph correctly writes to activity.log, errors.log, and guardrails.md
 - [x] Run the hello.sh script and verify output
   - **AC:** Script runs successfully, output shows "Hello Ralph"
 
-- [ ] Try to read a non-existent file to test error logging
+- [x] Try to read a non-existent file to test error logging
   - **AC:** Error logged to errors.log with CAUSE and FIX
 
 - [ ] CHECKPOINT: Verify logs are working

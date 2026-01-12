@@ -35,3 +35,21 @@ Created scripts/hello.sh with "Hello Ralph" output. File is executable with prop
 ### Result
 **Status:** Completed | **Completed:** 17:43
 Successfully executed scripts/hello.sh. Output verified: "Hello Ralph". All activity logged to activity.log.
+
+---
+
+## [260112-test-logging-feature] Task 3: Try to read a non-existent file to test error logging
+**Status:** In Progress | **Time:** 2026-01-12 17:45 | **Model:** haiku | **Mode:** prototype
+
+### Plan
+- Attempt to read a file that doesn't exist (non-existent-file.txt)
+- Capture the error output
+- Verify error is logged to errors.log with CAUSE and FIX sections
+- Log the attempt to activity.log
+
+- [17:45] Started: Try to read a non-existent file to test error logging
+- [17:45] Completed: Error captured and logged to errors.log with CAUSE and FIX sections
+
+### Result
+**Status:** Completed | **Completed:** 17:45
+Successfully tested error logging. Attempted to read non-existent file, which correctly triggered an error. Created errors.log with CAUSE (file doesn't exist) and FIX (error was expected for testing). Activity logged to activity.log.
