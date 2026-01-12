@@ -6,7 +6,7 @@
 notify() {
   local title="$1"
   local msg="$2"
-  say "$msg" 2>/dev/null &
+  # say "$msg" 2>/dev/null &  # Disabled - distracting during calls
   osascript <<EOF &
 display dialog "$msg" with title "$title" buttons {"OK"} default button "OK"
 EOF

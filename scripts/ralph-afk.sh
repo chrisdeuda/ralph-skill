@@ -18,6 +18,20 @@ untrack_pid() {
   fi
 }
 
+# Kill and cleanup a Claude process
+kill_and_cleanup() {
+  local pid="$1"
+  if [ -n "$pid" ] && ps -p "$pid" > /dev/null 2>&1; then
+    kill "$pid" 2>/dev/null || true
+    sleep 0.5
+    # Force kill if still running
+    if ps -p "$pid" > /dev/null 2>&1; then
+      kill -9 "$pid" 2>/dev/null || true
+    fi
+  fi
+  untrack_pid "$pid"
+}
+
 if [ -z "$1" ] || [ -z "$2" ]; then
   echo "Usage: ralph-afk <plan-dir> <iterations> [model] [mode]"
   echo "Example: ralph-afk plans/260109-1430-my-feature/ 5"
@@ -120,7 +134,9 @@ EOF
     CHECKPOINT_PID=$!
     track_pid "$CHECKPOINT_PID"
     wait $CHECKPOINT_PID || true
-    untrack_pid "$CHECKPOINT_PID"
+    # Kill and cleanup after checkpoint
+    kill_and_cleanup "$CHECKPOINT_PID"
+    echo "🧹 Cleaned up checkpoint process"
 
     echo ""
     echo "✋ Ralph paused at checkpoint."
@@ -141,8 +157,11 @@ EOF
   track_pid "$CLAUDE_PID"
   wait $CLAUDE_PID || true
   result=$(cat "$OUTPUT_FILE")
-  untrack_pid "$CLAUDE_PID"
   rm -f "$OUTPUT_FILE"
+
+  # Kill and cleanup after task completion
+  kill_and_cleanup "$CLAUDE_PID"
+  echo "🧹 Cleaned up task process (PID: $CLAUDE_PID)"
 
   echo "$result"
 
