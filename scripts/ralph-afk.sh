@@ -67,7 +67,29 @@ for ((i=1; i<=$ITERATIONS; i++)); do
     echo "⚠️  CHECKPOINT DETECTED: $NEXT_TASK"
     echo "This task requires manual verification before continuing."
     echo ""
-    notify "Ralph Checkpoint" "Manual verification needed!"
+
+    # Extract AC (acceptance criteria) from the task if available
+    AC_LINE=$(grep -A2 "CHECKPOINT" "$TASKS_FILE" 2>/dev/null | grep -i "AC:" | head -1 | sed 's/.*AC://' | xargs)
+
+    # Build detailed popup message
+    POPUP_MSG="🛑 CHECKPOINT - Manual Verification Required
+
+📋 What to verify:
+${AC_LINE:-Test the prototype works correctly}
+
+✅ If working:
+   Run: ralph-afk $PLAN_DIR $((ITERATIONS-i)) $MODEL_OVERRIDE production
+
+❌ If broken:
+   Fix the issues, then re-run prototype phase
+
+Plan: $PLAN_NAME"
+
+    # Show detailed popup
+    osascript <<EOF &
+display dialog "$POPUP_MSG" with title "Ralph Checkpoint" buttons {"Open Terminal", "OK"} default button "OK"
+EOF
+    say "Checkpoint reached. Please verify the prototype works." 2>/dev/null &
 
     # Mark checkpoint as complete and log it
     claude --model haiku --dangerously-skip-permissions -p "@$PROGRESS_FILE @$TASKS_FILE
@@ -83,9 +105,13 @@ for ((i=1; i<=$ITERATIONS; i++)); do
 
     echo ""
     echo "✋ Ralph paused at checkpoint."
-    echo "   1. Test the feature manually"
-    echo "   2. If working: ralph-afk $PLAN_DIR $((ITERATIONS-i)) $MODEL_OVERRIDE production"
-    echo "   3. If broken: Fix issues, then re-run prototype phase"
+    echo ""
+    echo "📋 VERIFICATION CHECKLIST:"
+    echo "   ${AC_LINE:-Test the prototype works correctly}"
+    echo ""
+    echo "👉 NEXT STEPS:"
+    echo "   ✅ If working: ralph-afk $PLAN_DIR $((ITERATIONS-i)) $MODEL_OVERRIDE production"
+    echo "   ❌ If broken: Fix issues, then re-run prototype phase"
     exit 0
   fi
 
