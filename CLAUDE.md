@@ -55,24 +55,44 @@ Real case: Tests passed (5/5) but API was wrong. Hours wasted.
 
 ## Multi-Machine Setup
 
-When user mentions "air" or "MacBook Air", use SSH to sync:
+When user mentions "air" or "MacBook Air", use SSH to sync (Syncthing often stops on Air).
 
+### Update Ralph on Air
 ```bash
-# SSH to MacBook Air
-ssh air "command here"
-
-# Sync Ralph skill
 ssh air "cd ~/.claude/skills/ralph && git pull origin master"
+```
 
-# Add MCP via Python (claude CLI not in SSH PATH)
+### Add MCP to Air (claude CLI not in SSH PATH)
+```bash
 ssh air 'python3 -c "
 import json
 with open(\"/Users/chrisdeuda/.claude.json\", \"r\") as f:
     config = json.load(f)
-config[\"mcpServers\"][\"mcp_name\"] = {\"type\": \"stdio\", \"command\": \"npx\", \"args\": [\"pkg@latest\"]}
+config.setdefault(\"mcpServers\", {})[\"MCP_NAME\"] = {
+    \"type\": \"stdio\",
+    \"command\": \"npx\",
+    \"args\": [\"package@latest\"],
+    \"env\": {}
+}
 with open(\"/Users/chrisdeuda/.claude.json\", \"w\") as f:
     json.dump(config, f, indent=2)
+print(\"MCP added\")
 "'
 ```
 
-Note: Syncthing often stops on Air - use SSH as fallback.
+### Full Sync Flow (after Ralph changes)
+```bash
+# 1. Push from current machine
+cd ~/.claude/skills/ralph && git push origin master
+
+# 2. Pull on Air
+ssh air "cd ~/.claude/skills/ralph && git pull origin master"
+
+# 3. Verify
+ssh air "~/.claude/skills/ralph/scripts/ralph-playwriter.sh --status"
+```
+
+### Check Air Status
+```bash
+ssh air "hostname && cat ~/.claude.json | grep -A 4 playwriter"
+```
