@@ -29,7 +29,7 @@
 <!-- Full test coverage -->
 <!-- Run: ralph-afk plans/260112-bash-unit-tests 5 auto production -->
 
-- [ ] Add tests for is_checkpoint()
+- [x] Add tests for is_checkpoint()
   - **AC:** Tests: "CHECKPOINT" → yes, "manual verify" → yes, normal task → no
 
 - [ ] Add tests for get_next_task()

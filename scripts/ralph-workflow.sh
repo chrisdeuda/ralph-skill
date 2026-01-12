@@ -133,7 +133,7 @@ build_file_refs() {
 # Must start with "CHECKPOINT" or contain "PAUSE:" to avoid false positives
 is_checkpoint() {
   local task="$1"
-  echo "$task" | grep -qE "^CHECKPOINT|PAUSE:|manual.*(verify|test|check)"
+  echo "$task" | grep -qE "^\s*CHECKPOINT|PAUSE:|manual.*(verify|test|check)"
 }
 
 # Export for scripts

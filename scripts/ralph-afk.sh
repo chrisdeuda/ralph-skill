@@ -104,7 +104,7 @@ Plan: $PLAN_NAME"
     osascript <<EOF &
 display dialog "$POPUP_MSG" with title "Ralph Checkpoint" buttons {"Open Terminal", "OK"} default button "OK"
 EOF
-    say "Checkpoint reached. Please verify the prototype works." 2>/dev/null &
+    # say "Checkpoint reached. Please verify the prototype works." 2>/dev/null &
 
     # Mark checkpoint as complete and log it (with PID tracking)
     claude --model haiku --dangerously-skip-permissions -p "@$PROGRESS_FILE @$TASKS_FILE

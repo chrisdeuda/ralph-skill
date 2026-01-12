@@ -90,3 +90,38 @@ Phase 1 complete. All tasks through Task 4 verified working:
 **Verification required:** Run `bats tests/` to confirm all tests pass before proceeding to Phase 2 (Quality/Production mode tests).
 
 Please verify Phase 1 works correctly before running Phase 2.
+
+---
+
+## [260112-bash-unit-tests] Task 8: Add tests for is_checkpoint()
+**Status:** In Progress | **Time:** 2026-01-12 16:56 | **Model:** haiku | **Mode:** production
+
+### Plan
+- Create test-is-checkpoint.bats file in tests/ directory
+- Test the checkpoint detection logic with comprehensive cases:
+  - "CHECKPOINT" keyword → yes
+  - "PAUSE:" keyword → yes
+  - "manual verify" → yes
+  - "manual test" → yes
+  - "manual check" → yes
+  - Regular task names → no
+  - Tasks without checkpoint keywords → no
+  - Edge cases (empty string, whitespace, case sensitivity)
+- Handle edge cases and verify test passes
+
+### Actions
+- 16:57 Found existing test-is-checkpoint.bats with 20 test cases
+- 16:57 Ran tests: 10 passing, 10 failing - tests not checking exit codes correctly
+- 16:57 Issue: is_checkpoint() returns exit code but tests were checking output instead
+- 16:57 Fixed test cases: removed subshell output capture, now directly test exit codes
+- 16:57 Fixed is_checkpoint() function: updated regex to handle leading whitespace with ^\s*CHECKPOINT
+- 16:57 Ran all tests: 30/30 passing (10 detect_model + 20 is_checkpoint)
+
+### Result
+**Status:** Completed | **Completed:** 16:57
+Comprehensive test suite for is_checkpoint() completed with 20 test cases covering:
+- Checkpoint detection: CHECKPOINT keyword, PAUSE: keyword, manual verify/test/check phrases
+- Negative cases: regular tasks, empty strings, whitespace-only strings
+- Edge cases: case sensitivity, mid-string detection, leading whitespace handling
+- Fixed is_checkpoint() function regex to handle leading whitespace properly
+- All 30 tests passing (detect_model + is_checkpoint combined test suite)
