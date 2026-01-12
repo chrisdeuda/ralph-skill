@@ -32,7 +32,7 @@
 - [x] Add tests for is_checkpoint()
   - **AC:** Tests: "CHECKPOINT" → yes, "manual verify" → yes, normal task → no
 
-- [ ] Add tests for get_next_task()
+- [x] Add tests for get_next_task()
   - **AC:** Tests: finds unchecked task, skips checked, returns empty when done
 
 - [ ] Add tests for build_file_refs()

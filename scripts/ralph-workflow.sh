@@ -29,7 +29,7 @@ PLAN_NAME=$(basename "$PLAN_DIR")
 detect_task_source() {
   if [ -f "$TASKS_FILE" ]; then
     echo "tasks"
-  elif [ -f "$PLAN_FILE" ]; then
+  elif [ -n "$(get_phase_files)" ]; then
     echo "phases"
   else
     echo "none"

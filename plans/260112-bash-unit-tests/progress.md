@@ -125,3 +125,38 @@ Comprehensive test suite for is_checkpoint() completed with 20 test cases coveri
 - Edge cases: case sensitivity, mid-string detection, leading whitespace handling
 - Fixed is_checkpoint() function regex to handle leading whitespace properly
 - All 30 tests passing (detect_model + is_checkpoint combined test suite)
+
+---
+
+## [260112-bash-unit-tests] Task 9: Add tests for get_next_task()
+**Status:** In Progress | **Time:** 2026-01-12 16:58 | **Model:** haiku | **Mode:** production
+
+### Plan
+- Create test-get-next-task.bats file in tests/ directory
+- Test get_next_task() which finds next unchecked task from tasks.md or phase files
+- Test scenarios:
+  - Returns first unchecked task from tasks.md
+  - Skips checked tasks and returns next unchecked
+  - Returns empty string when all tasks completed
+  - Detects task source (tasks vs phases)
+  - Returns empty when no task files exist
+  - Handles both single-line and multi-line task descriptions
+- Handle edge cases and verify all tests pass
+
+### Actions
+- 16:58 Created test-get-next-task.bats with 27 comprehensive test cases
+- 16:58 Fixed test_helper.bash to properly reset PLAN_DIR between tests with refresh_plan_vars()
+- 16:58 Discovered bug in detect_task_source(): checks for plan.md instead of phase-*.md files
+- 16:58 Bug fix: Updated detect_task_source() to check for phase files instead of plan.md
+- 16:58 Fixed test helper to call refresh_plan_vars after removing/creating task files
+- 16:58 Ran all 57 tests (10 detect_model + 20 is_checkpoint + 27 get_next_task) - all passing
+
+### Result
+**Status:** Completed | **Completed:** 16:58
+Comprehensive test suite for get_next_task() and related functions completed with 27 test cases covering:
+- Task extraction from tasks.md: first task, skipping checked, handling long descriptions
+- Task extraction from phase files: phase ordering, skipping completed phases
+- Task source detection: tasks.md vs phase files, precedence rules
+- Edge cases: special characters, whitespace handling, malformed lines
+- Fixed bug in detect_task_source() to properly detect phase files
+- All 57 tests passing across three test suites
