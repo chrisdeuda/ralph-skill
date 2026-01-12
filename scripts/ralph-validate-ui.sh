@@ -27,6 +27,46 @@ NC='\033[0m'
 DEV_BROWSER_DIR="$HOME/.claude/skills/dev-browser"
 DEV_BROWSER_PORT=9222
 
+# Auto-detect dev server URL from common configs
+detect_dev_url() {
+  # Check environment variable first
+  if [ -n "$RALPH_DEV_URL" ]; then
+    echo "$RALPH_DEV_URL"
+    return
+  fi
+
+  # Try to detect from vite.config (default 5173)
+  if [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
+    echo "http://localhost:5173"
+    return
+  fi
+
+  # Try to detect from next.config (default 3000)
+  if [ -f "next.config.js" ] || [ -f "next.config.mjs" ]; then
+    echo "http://localhost:3000"
+    return
+  fi
+
+  # Try to detect from package.json scripts
+  if [ -f "package.json" ]; then
+    if grep -q "\"dev\".*vite" package.json 2>/dev/null; then
+      echo "http://localhost:5173"
+      return
+    fi
+    if grep -q "\"dev\".*next" package.json 2>/dev/null; then
+      echo "http://localhost:3000"
+      return
+    fi
+    if grep -q "\"start\".*react-scripts" package.json 2>/dev/null; then
+      echo "http://localhost:3000"
+      return
+    fi
+  fi
+
+  # Default fallback
+  echo "http://localhost:3000"
+}
+
 # Check if dev-browser server is running
 is_dev_browser_running() {
   curl -s "http://localhost:$DEV_BROWSER_PORT" > /dev/null 2>&1
@@ -182,7 +222,7 @@ case "${1:-}" in
     CRITERIA="$3"
     ;;
   *)
-    URL="${1:-http://localhost:5173}"
+    URL="${1:-$(detect_dev_url)}"
     CRITERIA="${2:-UI renders correctly}"
     ;;
 esac
