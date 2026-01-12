@@ -5,6 +5,18 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PID_FILE="$HOME/.ralph-pids"
+
+# Track Claude PID for ralph-kill
+track_pid() {
+  echo "$1" >> "$PID_FILE"
+}
+
+untrack_pid() {
+  if [ -f "$PID_FILE" ]; then
+    sed -i '' "/$1/d" "$PID_FILE" 2>/dev/null || true
+  fi
+}
 
 if [ -z "$1" ]; then
   echo "Usage: ralph-once <plan-dir> [model] [mode]"
@@ -55,7 +67,12 @@ All $COMPLETED_COUNT tasks already complete!"
   exit 0
 fi
 
-claude --model "$MODEL" --dangerously-skip-permissions -p "$RALPH_WORKFLOW $RALPH_COMPLETE_MSG"
+# Run Claude with PID tracking
+claude --model "$MODEL" --dangerously-skip-permissions -p "$RALPH_WORKFLOW $RALPH_COMPLETE_MSG" &
+CLAUDE_PID=$!
+track_pid "$CLAUDE_PID"
+wait $CLAUDE_PID || true
+untrack_pid "$CLAUDE_PID"
 
 COMPLETED_COUNT=$(grep -c "^\- \[x\]" "$TASKS_FILE" 2>/dev/null || echo "0")
 REMAINING_COUNT=$(grep -c "^\- \[ \]" "$TASKS_FILE" 2>/dev/null || echo "0")

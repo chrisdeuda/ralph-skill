@@ -5,6 +5,18 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PID_FILE="$HOME/.ralph-pids"
+
+# Track Claude PID for ralph-kill
+track_pid() {
+  echo "$1" >> "$PID_FILE"
+}
+
+untrack_pid() {
+  if [ -f "$PID_FILE" ]; then
+    sed -i '' "/$1/d" "$PID_FILE" 2>/dev/null || true
+  fi
+}
 
 if [ -z "$1" ] || [ -z "$2" ]; then
   echo "Usage: ralph-afk <plan-dir> <iterations> [model] [mode]"
@@ -94,7 +106,7 @@ display dialog "$POPUP_MSG" with title "Ralph Checkpoint" buttons {"Open Termina
 EOF
     say "Checkpoint reached. Please verify the prototype works." 2>/dev/null &
 
-    # Mark checkpoint as complete and log it
+    # Mark checkpoint as complete and log it (with PID tracking)
     claude --model haiku --dangerously-skip-permissions -p "@$PROGRESS_FILE @$TASKS_FILE
     This is a CHECKPOINT task. Do the following:
     1. Append to progress.md:
@@ -104,7 +116,11 @@ EOF
        **Status:** Paused for manual testing
        Please verify Phase 1 works correctly before running Phase 2.
     2. Mark the checkpoint task as [x] complete in tasks.md
-    3. Output: CHECKPOINT_COMPLETE"
+    3. Output: CHECKPOINT_COMPLETE" &
+    CHECKPOINT_PID=$!
+    track_pid "$CHECKPOINT_PID"
+    wait $CHECKPOINT_PID || true
+    untrack_pid "$CHECKPOINT_PID"
 
     echo ""
     echo "✋ Ralph paused at checkpoint."
@@ -118,7 +134,15 @@ EOF
     exit 0
   fi
 
-  result=$(claude --model "$MODEL" --dangerously-skip-permissions -p "$RALPH_WORKFLOW $RALPH_COMPLETE_MSG")
+  # Run Claude with PID tracking
+  OUTPUT_FILE=$(mktemp)
+  claude --model "$MODEL" --dangerously-skip-permissions -p "$RALPH_WORKFLOW $RALPH_COMPLETE_MSG" > "$OUTPUT_FILE" 2>&1 &
+  CLAUDE_PID=$!
+  track_pid "$CLAUDE_PID"
+  wait $CLAUDE_PID || true
+  result=$(cat "$OUTPUT_FILE")
+  untrack_pid "$CLAUDE_PID"
+  rm -f "$OUTPUT_FILE"
 
   echo "$result"
 

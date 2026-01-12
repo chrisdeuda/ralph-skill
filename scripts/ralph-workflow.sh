@@ -92,8 +92,9 @@ RALPH_SKILL_DIR="$HOME/.claude/skills/ralph"
 # Build session name for Claude picker display
 # Format: [Ralph] plan-slug: Task N - first 40 chars of task
 build_session_name() {
-  local task_num=$(grep -c "^\- \[x\]" "$TASKS_FILE" 2>/dev/null || echo "0")
-  task_num=$((task_num + 1))
+  local completed_count
+  completed_count=$(grep -c "^\- \[x\]" "$TASKS_FILE" 2>/dev/null) || completed_count=0
+  local task_num=$((completed_count + 1))
   local task_preview="${NEXT_TASK:0:40}"
   echo "[Ralph] $PLAN_NAME: T$task_num - $task_preview"
 }

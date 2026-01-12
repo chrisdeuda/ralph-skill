@@ -29,8 +29,29 @@ Ralph works with your existing plans directory:
 ```
 plans/{date}-{slug}/
 ├── tasks.md      # Task file with checkboxes [ ] and [x]
+├── context.md    # Key files to focus on (optional, saves tokens)
 └── progress.md   # Auto-generated progress log
 ```
+
+### context.md (Optional - Saves Exploration Tokens)
+
+Create this file to tell Ralph which files are relevant, avoiding re-discovery each task:
+
+```markdown
+# Context
+
+## Key Files
+- src/components/Calculator.jsx   # Main component to modify
+- src/utils/parser.js             # Parser logic
+- src/components/Display.jsx      # Display component
+
+## Patterns
+- Components use useReducer for state
+- Tests located in __tests__/ directories
+- Use × and ÷ symbols instead of * and /
+```
+
+Ralph reads context.md FIRST before starting any task, saving exploration time.
 
 ## Usage
 

@@ -120,15 +120,38 @@ EOF
   echo "Created: $PLAN_DIR/progress.md"
 fi
 
+# Create context.md template if not exists (saves exploration tokens)
+if [ ! -f "$PLAN_DIR/context.md" ]; then
+  cat > "$PLAN_DIR/context.md" << EOF
+# Context
+
+## Key Files
+<!-- List files Ralph should focus on - saves exploration time -->
+- src/example/MainFile.jsx       # Primary file to modify
+- src/example/helper.js          # Related utility
+
+## Patterns
+<!-- Document codebase patterns Ralph should follow -->
+- State management: useReducer
+- Test location: __tests__/ directories
+- Naming: kebab-case for files
+
+## Notes
+<!-- Any context that helps Ralph work faster -->
+EOF
+  echo "Created: $PLAN_DIR/context.md (fill in key files to save tokens)"
+fi
+
 echo ""
 echo "Plan ready at: $PLAN_DIR"
 echo ""
 echo "Next steps:"
 if [ -f "$PLAN_DIR/plan.md" ]; then
-  echo "  Plan created by /plan - Ralph will use phase files"
-  echo "  Run: ralph-once $PLAN_DIR"
+  echo "  1. Edit context.md with key files (saves exploration tokens)"
+  echo "  2. Run: ralph-once $PLAN_DIR"
 else
   echo "  1. Edit $PLAN_DIR/tasks.md to add your tasks"
-  echo "  2. Run: ralph-once $PLAN_DIR"
+  echo "  2. Edit $PLAN_DIR/context.md with key files (saves tokens)"
+  echo "  3. Run: ralph-once $PLAN_DIR"
 fi
 echo "  Or AFK: ralph-afk $PLAN_DIR 5"
