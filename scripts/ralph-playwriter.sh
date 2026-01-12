@@ -3,19 +3,25 @@
 # Uses single execute tool with full Playwright API - more efficient than dev-browser
 #
 # Prerequisites:
-#   1. Install Playwriter Chrome extension from Web Store
-#   2. Click extension icon on tabs you want to control (turns green)
-#   3. Playwriter MCP configured in ~/.claude/settings.json
+#   1. Install Playwriter Chrome extension from Chrome Web Store
+#   2. Click extension icon on tabs you want to control (shows "Connected")
+#   3. Playwriter MCP configured in ~/.claude.json (for Claude Code)
+#      OR ~/.claude/settings.json (for Claude Desktop)
+#
+# IMPORTANT: Claude Code uses ~/.claude.json, NOT ~/.claude/settings.json
+#   Add to mcpServers in ~/.claude.json:
+#   "playwriter": { "command": "npx", "args": ["playwriter@latest"] }
 #
 # Usage:
 #   ralph-playwriter --status                    # Check connection status
-#   ralph-playwriter --snapshot <description>    # Get accessibility snapshot with labels
+#   ralph-playwriter --setup                     # Show setup instructions
+#   ralph-playwriter --patterns                  # Show common code patterns
 #   ralph-playwriter <playwright-code>           # Execute Playwright code
 #
 # Examples:
 #   ralph-playwriter --status
-#   ralph-playwriter --snapshot "Find login button"
-#   ralph-playwriter 'await page.click("button:has-text(\"Submit\")")'
+#   ralph-playwriter --setup
+#   ralph-playwriter 'await screenshotWithAccessibilityLabels({ page });'
 
 set -e
 
@@ -57,7 +63,76 @@ show_status() {
   fi
 }
 
-# Generate Playwright code template
+# Show setup instructions
+show_setup() {
+  echo -e "${BLUE}=== Playwriter Setup for Claude Code ===${NC}"
+  echo ""
+  echo -e "${YELLOW}Step 1: Install Chrome Extension${NC}"
+  echo "  - Search 'Playwriter' in Chrome Web Store"
+  echo "  - Install the extension"
+  echo ""
+  echo -e "${YELLOW}Step 2: Configure MCP in ~/.claude.json${NC}"
+  echo "  Add to your mcpServers:"
+  echo ""
+  echo '  "playwriter": {'
+  echo '    "command": "npx",'
+  echo '    "args": ["playwriter@latest"]'
+  echo '  }'
+  echo ""
+  echo -e "${YELLOW}Step 3: Restart Claude Code${NC}"
+  echo "  - Run: /mcp to verify playwriter is connected"
+  echo ""
+  echo -e "${YELLOW}Step 4: Activate on Tab${NC}"
+  echo "  - Navigate to your dev server URL"
+  echo "  - Click the Playwriter extension icon"
+  echo "  - Wait for 'Connected' status"
+  echo ""
+  echo -e "${GREEN}NOTE: Claude Desktop uses ~/.claude/settings.json instead${NC}"
+}
+
+# Show common patterns
+show_patterns() {
+  echo -e "${BLUE}=== Playwriter Common Patterns ===${NC}"
+  echo ""
+  echo -e "${YELLOW}📸 Screenshot with Labels (most useful)${NC}"
+  echo '  await screenshotWithAccessibilityLabels({ page });'
+  echo ""
+  echo -e "${YELLOW}🔍 Search Accessibility Tree${NC}"
+  echo '  const snapshot = await accessibilitySnapshot({ page, search: /button|submit/i });'
+  echo '  console.log(snapshot);'
+  echo ""
+  echo -e "${YELLOW}🖱️ Click Element by aria-ref${NC}"
+  echo "  await page.locator('aria-ref=e182').click();"
+  echo ""
+  echo -e "${YELLOW}📝 Fill Form Input${NC}"
+  echo "  await page.fill('input[name=\"email\"]', 'test@example.com');"
+  echo ""
+  echo -e "${YELLOW}🔄 Handle New Tab/Popup (e.g., PDF)${NC}"
+  echo '  const [popup] = await Promise.all(['
+  echo "    context.waitForEvent('page', { timeout: 15000 }),"
+  echo "    page.locator('button:text(\"Publish\")').click()"
+  echo '  ]);'
+  echo '  await popup.waitForLoadState();'
+  echo '  state.newPage = popup;'
+  echo ""
+  echo -e "${YELLOW}📜 Scroll and Screenshot${NC}"
+  echo '  await page.mouse.wheel(0, 500);'
+  echo '  await page.waitForTimeout(500);'
+  echo '  await screenshotWithAccessibilityLabels({ page });'
+  echo ""
+  echo -e "${YELLOW}🔧 Reset Connection (when stuck)${NC}"
+  echo "  Use: mcp__playwriter__reset tool"
+  echo ""
+  echo -e "${YELLOW}📊 Check All Pages${NC}"
+  echo "  console.log('Pages:', context.pages().map(p => p.url()));"
+  echo ""
+  echo -e "${YELLOW}💾 Store State Between Calls${NC}"
+  echo '  state.myData = someValue;  // persists across execute calls'
+  echo ""
+  echo -e "${GREEN}TIP: Use screenshotWithAccessibilityLabels first to get aria-ref IDs${NC}"
+}
+
+# Generate Playwright code template (legacy)
 generate_template() {
   local action="$1"
 
@@ -69,17 +144,20 @@ generate_template() {
       echo 'await page.fill("selector", "value");'
       ;;
     screenshot)
-      echo 'await screenshotWithAccessibilityLabels();'
+      echo 'await screenshotWithAccessibilityLabels({ page });'
       ;;
     snapshot)
-      echo 'const snapshot = await page.accessibility.snapshot(); console.log(JSON.stringify(snapshot, null, 2));'
+      echo 'const snapshot = await accessibilitySnapshot({ page }); console.log(snapshot);'
       ;;
     navigate)
       echo 'await page.goto("https://example.com");'
       ;;
+    popup)
+      echo 'const [popup] = await Promise.all([context.waitForEvent("page"), page.click("button")]); state.popup = popup;'
+      ;;
     *)
       echo "Unknown action: $action"
-      echo "Available: click, fill, screenshot, snapshot, navigate"
+      echo "Available: click, fill, screenshot, snapshot, navigate, popup"
       ;;
   esac
 }
@@ -89,6 +167,12 @@ case "${1:-}" in
   --status|-s)
     show_status
     ;;
+  --setup)
+    show_setup
+    ;;
+  --patterns|-p)
+    show_patterns
+    ;;
   --template|-t)
     generate_template "${2:-click}"
     ;;
@@ -97,20 +181,28 @@ case "${1:-}" in
     echo ""
     echo "Usage:"
     echo "  ralph-playwriter --status              Check connection status"
+    echo "  ralph-playwriter --setup               Show setup instructions"
+    echo "  ralph-playwriter --patterns            Show common code patterns"
     echo "  ralph-playwriter --template <action>   Generate code template"
     echo ""
-    echo "Templates: click, fill, screenshot, snapshot, navigate"
+    echo "Templates: click, fill, screenshot, snapshot, navigate, popup"
     echo ""
     echo "Playwriter MCP provides:"
     echo "  - Single 'execute' tool with full Playwright API"
-    echo "  - screenshotWithAccessibilityLabels() for Vimium-style labels"
-    echo "  - Bypass automation detection by disconnecting extension"
-    echo "  - ~50-100ms per action, minimal context window usage"
+    echo "  - screenshotWithAccessibilityLabels({ page }) for visual testing"
+    echo "  - accessibilitySnapshot({ page, search }) for element search"
+    echo "  - aria-ref selectors for precise element targeting"
+    echo "  - state object for persisting data between calls"
+    echo "  - mcp__playwriter__reset for connection recovery"
     echo ""
     echo "Speed Comparison:"
     echo "  Playwriter:   ~50ms/action, 1 tool, minimal tokens"
     echo "  Dev-browser:  ~100ms/action, full CDP, text snapshots"
     echo "  Vision:       ~3-5s/action, high token cost"
+    echo ""
+    echo "Claude Code vs Desktop:"
+    echo "  Claude Code:    Configure MCP in ~/.claude.json"
+    echo "  Claude Desktop: Configure MCP in ~/.claude/settings.json"
     ;;
   *)
     if [ -z "$1" ]; then
@@ -121,8 +213,13 @@ case "${1:-}" in
       echo "In Claude, use the playwriter execute tool:"
       echo "  mcp__playwriter__execute with your Playwright code"
       echo ""
-      echo "Your code:"
-      echo "  $1"
+      echo "Quick patterns:"
+      echo "  - Screenshot: await screenshotWithAccessibilityLabels({ page });"
+      echo "  - Search: await accessibilitySnapshot({ page, search: /pattern/ });"
+      echo "  - Click: await page.locator('aria-ref=e123').click();"
+      echo "  - Reset: Use mcp__playwriter__reset when stuck"
+      echo ""
+      echo "Run: ralph-playwriter --patterns for more examples"
     fi
     ;;
 esac

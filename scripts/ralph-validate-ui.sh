@@ -1,16 +1,25 @@
 #!/bin/bash
 # Ralph UI Validator - Automated UI verification
-# Uses dev-browser (ARIA snapshot) by default, falls back to vision
+# Uses dev-browser (ARIA snapshot) by default, falls back to vision or playwriter
 #
 # Usage:
 #   ralph-validate-ui <url> <criteria>              # Auto (dev-browser or vision)
 #   ralph-validate-ui --quick <url> <selectors...>  # Zero tokens - element exists check
 #   ralph-validate-ui --vision <url> <criteria>     # Force vision mode
+#   ralph-validate-ui --playwriter <url> <criteria> # Use playwriter MCP (recommended)
 #
 # Examples:
 #   ralph-validate-ui "http://localhost:5173" "Calculator with Clear History button"
 #   ralph-validate-ui --quick "http://localhost:5173" ".clear-btn" "button:has-text('=')"
 #   ralph-validate-ui --vision "http://localhost:5173" "Modern dark theme UI"
+#   ralph-validate-ui --playwriter "http://localhost:5174" "GHS label with pictograms"
+#
+# Playwriter Mode (Recommended for Claude Code):
+#   - Uses playwriter MCP for browser automation
+#   - More reliable than dev-browser for complex UIs
+#   - Supports screenshotWithAccessibilityLabels for visual testing
+#   - Handles new tabs/popups (e.g., PDF generation)
+#   - Configure in ~/.claude.json (Claude Code) or ~/.claude/settings.json (Desktop)
 
 set -e
 
@@ -151,6 +160,49 @@ Be strict but fair." @"$screenshot_path" 2>/dev/null)
   return 0
 }
 
+# Validate using playwriter MCP (recommended for Claude Code)
+validate_with_playwriter() {
+  local url="$1"
+  local criteria="$2"
+
+  echo -e "${YELLOW}🎭 Using Playwriter MCP mode...${NC}"
+  echo ""
+  echo "This mode requires Claude to execute playwriter commands."
+  echo ""
+  echo -e "${BLUE}Instructions for Claude:${NC}"
+  echo "  1. Navigate to: $url"
+  echo "  2. Use screenshotWithAccessibilityLabels({ page }) to capture UI"
+  echo "  3. Validate against criteria: $criteria"
+  echo ""
+  echo -e "${YELLOW}Playwriter code pattern:${NC}"
+  echo ""
+  echo "  // Navigate to page"
+  echo "  await page.goto('$url');"
+  echo "  await page.waitForLoadState('networkidle');"
+  echo ""
+  echo "  // Take screenshot with accessibility labels"
+  echo "  await screenshotWithAccessibilityLabels({ page });"
+  echo ""
+  echo "  // Search for specific elements"
+  echo "  const snapshot = await accessibilitySnapshot({ page, search: /$criteria/i });"
+  echo "  console.log(snapshot);"
+  echo ""
+  echo -e "${GREEN}Criteria to validate:${NC} $criteria"
+  echo ""
+  echo -e "${BLUE}Key Playwriter Functions:${NC}"
+  echo "  - screenshotWithAccessibilityLabels({ page })  # Visual + aria-refs"
+  echo "  - accessibilitySnapshot({ page, search })      # Search elements"
+  echo "  - page.locator('aria-ref=e123').click()        # Click by ref"
+  echo "  - context.waitForEvent('page')                 # Handle new tabs"
+  echo "  - mcp__playwriter__reset                       # Reset if stuck"
+  echo ""
+  echo "Run this in Claude with playwriter MCP enabled."
+
+  # Return success - actual validation is done by Claude
+  RESULT="INFO: Playwriter mode - manual Claude validation required"
+  return 0
+}
+
 # Quick mode - just check if elements exist (zero tokens!)
 validate_quick() {
   local url="$1"
@@ -221,6 +273,11 @@ case "${1:-}" in
     URL="$2"
     CRITERIA="$3"
     ;;
+  --playwriter|--pw)
+    MODE="playwriter"
+    URL="$2"
+    CRITERIA="$3"
+    ;;
   *)
     URL="${1:-$(detect_dev_url)}"
     CRITERIA="${2:-UI renders correctly}"
@@ -244,6 +301,9 @@ case "$MODE" in
   dev-browser)
     validate_with_dev_browser "$URL" "$CRITERIA"
     ;;
+  playwriter)
+    validate_with_playwriter "$URL" "$CRITERIA"
+    ;;
   auto)
     # Try dev-browser first, fall back to vision
     if is_dev_browser_running; then
@@ -251,6 +311,7 @@ case "$MODE" in
     else
       echo -e "${YELLOW}dev-browser not running, using vision mode${NC}"
       echo -e "${YELLOW}Tip: Start with: ~/.claude/skills/dev-browser/server.sh &${NC}"
+      echo -e "${YELLOW}Or use: ralph-validate-ui --playwriter for Claude Code${NC}"
       echo ""
       validate_with_vision "$URL" "$CRITERIA"
     fi
@@ -264,6 +325,12 @@ if echo "$RESULT" | grep -qi "^PASS"; then
   echo -e "${GREEN}✅ UI VALIDATION PASSED${NC}"
   echo -e "${GREEN}════════════════════════════${NC}"
   notify "✅ UI Validated" "${CRITERIA:-Elements exist}"
+  exit 0
+elif echo "$RESULT" | grep -qi "^INFO"; then
+  echo -e "${BLUE}════════════════════════════${NC}"
+  echo -e "${BLUE}ℹ️  PLAYWRITER MODE${NC}"
+  echo -e "${BLUE}════════════════════════════${NC}"
+  echo "Use Claude with playwriter MCP to validate UI"
   exit 0
 else
   echo -e "${RED}════════════════════════════${NC}"
