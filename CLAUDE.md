@@ -27,10 +27,10 @@ Phase 1: Prototype  →  CHECKPOINT  →  Phase 2: Quality
 - ⏳ Wait for human to test before Phase 2
 
 ### In Production Mode (`RALPH_MODE=production`):
-- ✅ Write unit tests
-- ✅ Write e2e tests
+- ✅ Write unit tests (vitest/jest - fast, run first)
 - ✅ Fix lint errors
 - ✅ Handle edge cases
+- ✅ Write e2e tests (playwright - slow, run LAST)
 - ✅ Code quality matters
 
 ## Why This Exists

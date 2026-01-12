@@ -93,11 +93,14 @@ if [ ! -f "$PLAN_DIR/tasks.md" ] && [ ! -f "$PLAN_DIR/plan.md" ]; then
 <!-- ONLY run after Phase 1 verified manually -->
 <!-- Run: ralph-afk $PLAN_DIR 5 auto production -->
 
-- [ ] Add unit tests
+- [ ] Add unit tests (vitest/jest - fast)
   - **AC:** Core paths covered, tests pass
 
 - [ ] Add error handling
   - **AC:** Edge cases handled gracefully
+
+- [ ] Add e2e tests (playwright - slow, run LAST)
+  - **AC:** Critical user flows tested
 
 ## Notes
 <!-- Context for Ralph -->
