@@ -178,6 +178,8 @@ Run these from any project directory:
 - `~/.claude/skills/ralph/scripts/ralph-afk.sh` - AFK loop
 - `~/.claude/skills/ralph/scripts/ralph-workflow.sh` - Shared workflow
 - `~/.claude/skills/ralph/scripts/ralph-publish-commands.sh` - Publish commands globally
+- `~/.claude/skills/ralph/scripts/ralph-validate-ui.sh` - UI validation (ARIA/vision)
+- `~/.claude/skills/ralph/scripts/ralph-test-ui.sh` - UI interaction testing
 
 ## Publishing Commands
 
@@ -191,6 +193,57 @@ To make Ralph commands available as `/ck:ralph:*` slash commands:
 
 This syncs commands from the skill to `~/.claude/commands/ralph/` and regenerates the catalog.
 
+## UI Testing with Dev-Browser
+
+Ralph integrates with dev-browser for fast, token-efficient UI testing. Uses Chrome DevTools Protocol (CDP) instead of screenshots.
+
+### Starting Dev-Browser
+
+```bash
+# Start the server (required for UI testing)
+~/.claude/skills/ralph/scripts/ralph-test-ui.sh --start
+
+# Or directly:
+~/.claude/skills/dev-browser/server.sh &
+```
+
+### UI Validation (ARIA Snapshot)
+
+Validate UI against criteria using text-based ARIA snapshots (~500 tokens vs ~3000 for vision):
+
+```bash
+ralph-validate-ui "http://localhost:5173" "Calculator has number buttons and Clear History"
+ralph-validate-ui --quick "http://localhost:5173" ".display" "button.operator"
+```
+
+### UI Interaction Testing
+
+Run automated interaction tests:
+
+```bash
+# Inline test
+ralph-test-ui "http://localhost:5173" 'await page.click("button:has-text(\"AC\")"); return await page.title();'
+
+# Click sequence
+ralph-test-ui --clicks "http://localhost:5173" 'button:has-text("3")' 'button:has-text("+")' 'button:has-text("4")'
+```
+
+### Using in Checkpoints
+
+Add automated UI validation to checkpoint tasks:
+
+```markdown
+- [ ] CHECKPOINT: Validate calculator UI
+  - **AC:** `ralph-validate-ui "http://localhost:5173" "All buttons centered, Clear History visible"`
+```
+
+### Speed Comparison
+
+| Method | Latency | Tokens |
+|--------|---------|--------|
+| Dev-browser (ARIA) | ~50-100ms | ~500-2000 |
+| Vision (screenshot) | ~3-5s | ~1500-5000 |
+
 ## Installation
 
 Add to your shell profile (~/.zshrc or ~/.bashrc):
@@ -201,4 +254,6 @@ alias ralph-init="~/.claude/skills/ralph/scripts/ralph-init.sh"
 alias ralph-review="~/.claude/skills/ralph/scripts/ralph-review.sh"
 alias ralph-once="~/.claude/skills/ralph/scripts/ralph-once.sh"
 alias ralph-afk="~/.claude/skills/ralph/scripts/ralph-afk.sh"
+alias ralph-validate-ui="~/.claude/skills/ralph/scripts/ralph-validate-ui.sh"
+alias ralph-test-ui="~/.claude/skills/ralph/scripts/ralph-test-ui.sh"
 ```
