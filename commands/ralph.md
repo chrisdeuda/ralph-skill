@@ -1,96 +1,79 @@
 ---
-description: Run Ralph autonomous coding loop on a plan
-argument-hint: "<plan-path> [iterations] [model]"
+description: Autonomous AI coding loop - show help and available commands
+argument-hint: "[help]"
 ---
 
 # Ralph - Autonomous AI Coding Loop
 
-You are Ralph, an autonomous AI coding agent that works through tasks from a plan file.
+Run AI coding in a loop, working autonomously on tasks from your plans directory.
 
-## Arguments
-- `$ARGUMENTS` contains: `<plan-path> [iterations] [model]`
+## Available Commands
 
-Parse the arguments:
-- If no arguments: Show usage and list available plans in `plans/` directory
-- If plan-path only: Run single iteration (HITL mode)
-- If plan-path + iterations: Run AFK loop
-- If plan-path + iterations + model: Run with specific model
+| Command | Description |
+|---------|-------------|
+| `/ralph-init <slug>` | Create new plan directory with tasks template |
+| `/ralph-review <plan>` | Review plan for unclear requirements |
+| `/ralph-once <plan>` | Run single iteration (human-in-the-loop) |
+| `/ralph-afk <plan> <N>` | Run N iterations autonomously |
+| `/ralph-status` | Show progress dashboard |
+| `/ralph-kill` | Stop Ralph processes |
 
-## Usage Examples
+## Quick Start
+
+```bash
+# 1. Create a plan
+/ralph-init my-feature
+
+# 2. Edit tasks.md with your tasks
+
+# 3. Review for issues
+/ralph-review plans/260112-my-feature/
+
+# 4. Run Phase 1 (prototype)
+/ralph-afk plans/260112-my-feature/ 5 auto prototype
+
+# 5. Manual verification at CHECKPOINT
+
+# 6. Run Phase 2 (production)
+/ralph-afk plans/260112-my-feature/ 5 auto production
 ```
-/ralph                                    # Show help and available plans
-/ralph plans/260109-feature/              # Single iteration
-/ralph plans/260109-feature/ 5            # 5 iterations, auto model
-/ralph plans/260109-feature/ 10 haiku     # 10 iterations with haiku
+
+## Workflow Philosophy
+
+```
+Phase 1: Prototype  →  CHECKPOINT  →  Phase 2: Quality
+(no tests/lint)       (manual test)   (tests/lint/polish)
 ```
 
-## Model Selection (Auto)
-| Task Keywords | Model |
-|---------------|-------|
-| lint, test, fix, docs, clean | Haiku |
-| implement, create, add, build | Sonnet |
-| debug, architect, refactor | Opus |
+**Why?** Real case: Tests passed (5/5) but API was wrong. Hours wasted.
+**Solution:** Human verifies core works BEFORE writing tests.
+
+## Quality Modes
+
+| Mode | Tests | Lint | Edge Cases |
+|------|-------|------|------------|
+| prototype | ❌ | ❌ | ❌ |
+| production | ✅ | ✅ | ✅ |
+
+## Model Selection (auto)
+
+| Task Keywords | Model | Cost |
+|---------------|-------|------|
+| lint, test, fix, docs, clean | Haiku | $ |
+| implement, create, add, build | Sonnet | $$ |
+| debug, architect, refactor | Opus | $$$ |
 
 ## Plan Structure
+
 ```
 plans/{date}-{slug}/
-├── tasks.md      # [ ] checkboxes
-└── progress.md   # Auto-generated log
+├── tasks.md      # [ ] checkboxes with acceptance criteria
+├── context.md    # Key files to focus on (saves tokens)
+└── progress.md   # Auto-generated progress log
 ```
 
-## Workflow
+## More Info
 
-### If showing help (no arguments):
-1. List plans in `plans/` directory
-2. Show usage examples
-3. Offer to create new plan with `ralph-init`
-
-### If running tasks:
-1. Read `<plan-path>/tasks.md` and `<plan-path>/progress.md`
-2. Find next incomplete task `- [ ]`
-3. Append to progress.md:
-   ```
-   ---
-   ## Task N: [description]
-   **Status:** In Progress | **Time:** YYYY-MM-DD HH:MM | **Model:** [model]
-   ### Plan
-   - Step 1
-   - Step 2
-   ```
-4. Implement the task + write tests for acceptance criteria
-5. Append actions as you work (never overwrite):
-   ```
-   ### Actions
-   - [HH:MM] Action taken
-   - [HH:MM] ERROR: What failed (if any)
-   - [HH:MM] RETRY: What tried instead
-   ```
-6. Run: `npm run lint -- --fix` (if available)
-7. Run: `npm test` (must pass)
-8. Append result:
-   ```
-   ### Result
-   **Status:** Completed | **Completed:** HH:MM
-   [What was achieved]
-   ```
-9. Mark `[ ]` as `[x]` in tasks.md
-10. Commit changes
-
-### Loop Control
-- If iterations > 1: Repeat workflow for next task
-- If all tasks complete: Output `ALL_TASKS_DONE`
-- Single task focus: ONLY WORK ON ONE TASK PER ITERATION
-
-## Initialize New Plan
-To create a new plan:
-```bash
-~/.claude/skills/ralph/scripts/ralph-init.sh <slug>
-```
-
-## Shell Scripts (for terminal use)
-```bash
-# Add to ~/.zshrc
-alias ralph-init="~/.claude/skills/ralph/scripts/ralph-init.sh"
-alias ralph-once="~/.claude/skills/ralph/scripts/ralph-once.sh"
-alias ralph-afk="~/.claude/skills/ralph/scripts/ralph-afk.sh"
-```
+- Type `/ralph-init` to create a new plan
+- Type `/ralph-status` to see all plans
+- Read `~/.claude/skills/ralph/CLAUDE.md` for design philosophy
