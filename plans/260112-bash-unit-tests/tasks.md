@@ -17,7 +17,7 @@
 - [x] Create test directory structure
   - **AC:** tests/ folder with test helper setup
 
-- [ ] Write first test for detect_model()
+- [x] Write first test for detect_model()
   - **AC:** Test passes: "lint" → haiku, "debug" → opus, default → sonnet
 
 - [ ] CHECKPOINT: Manual verification
