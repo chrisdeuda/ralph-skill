@@ -79,7 +79,7 @@ BATS test framework is working correctly. Ready for CHECKPOINT verification.
 ---
 
 ## CHECKPOINT: Manual Verification
-**Time:** 2026-01-12 16:52 | **Status:** Paused for manual testing
+**Time:** 2026-01-12 16:54 | **Status:** Paused for manual testing
 
 Phase 1 complete. All tasks through Task 4 verified working:
 - ralph-kill script created and tested
@@ -88,3 +88,5 @@ Phase 1 complete. All tasks through Task 4 verified working:
 - First test file (test-detect-model.bats) created with 10 passing tests
 
 **Verification required:** Run `bats tests/` to confirm all tests pass before proceeding to Phase 2 (Quality/Production mode tests).
+
+Please verify Phase 1 works correctly before running Phase 2.
