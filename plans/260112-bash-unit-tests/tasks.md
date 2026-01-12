@@ -20,7 +20,7 @@
 - [x] Write first test for detect_model()
   - **AC:** Test passes: "lint" → haiku, "debug" → opus, default → sonnet
 
-- [ ] CHECKPOINT: Manual verification
+- [x] CHECKPOINT: Manual verification
   - **AC:** Run `bats tests/` and see passing tests
   - **PAUSE:** Verify test framework works before adding more tests
 
