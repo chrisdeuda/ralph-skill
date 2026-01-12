@@ -18,3 +18,20 @@ Started: 2026-01-12 17:41
 ### Result
 **Status:** Completed | **Completed:** 17:42
 Created scripts/hello.sh with "Hello Ralph" output. File is executable with proper permissions (-rwxr-xr-x).
+
+---
+
+## [260112-test-logging-feature] Task 2: Run the hello.sh script and verify output
+**Status:** In Progress | **Time:** 2026-01-12 17:43 | **Model:** sonnet | **Mode:** prototype
+
+### Plan
+- Execute scripts/hello.sh using bash
+- Verify output shows "Hello Ralph"
+- Log the execution to activity.log
+
+- [17:43] Started: Run the hello.sh script and verify output
+- [17:43] Completed: Script executed successfully with output "Hello Ralph"
+
+### Result
+**Status:** Completed | **Completed:** 17:43
+Successfully executed scripts/hello.sh. Output verified: "Hello Ralph". All activity logged to activity.log.

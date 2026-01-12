@@ -8,7 +8,7 @@ Test that Ralph correctly writes to activity.log, errors.log, and guardrails.md
 - [x] Create a simple hello.sh script in scripts/ that prints "Hello Ralph"
   - **AC:** File exists at scripts/hello.sh and is executable
 
-- [ ] Run the hello.sh script and verify output
+- [x] Run the hello.sh script and verify output
   - **AC:** Script runs successfully, output shows "Hello Ralph"
 
 - [ ] Try to read a non-existent file to test error logging
