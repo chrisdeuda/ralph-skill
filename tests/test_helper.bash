@@ -3,12 +3,20 @@
 # Test helper for ralph-workflow.sh tests
 # Provides shared setup and utilities for BATS tests
 
-# Source the main ralph-workflow.sh script
+# Create temp dir and set PLAN_DIR before sourcing workflow
+# (workflow requires PLAN_DIR at source time)
+export TEST_TMPDIR=$(mktemp -d)
+export PLAN_DIR="$TEST_TMPDIR"
+
+# Create minimal plan files required by workflow
+echo "- [ ] Test task" > "$TEST_TMPDIR/tasks.md"
+
+# Source the workflow script
 source "${BATS_TEST_DIRNAME}/../scripts/ralph-workflow.sh"
 
 # Setup function (runs before each test)
 setup() {
-    # Create temp directories for testing if needed
+    # Reset temp dir for each test if needed
     export TEST_TMPDIR=$(mktemp -d)
 }
 
