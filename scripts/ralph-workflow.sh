@@ -142,14 +142,16 @@ fi
 # Quality mode instructions
 MODE_INSTRUCTIONS=""
 if [ "$RALPH_MODE" = "prototype" ]; then
-  MODE_INSTRUCTIONS="MODE: PROTOTYPE - Speed over perfection. Skip edge cases, minimal tests, get it working fast. \\"
+  MODE_INSTRUCTIONS="MODE: PROTOTYPE - Make it work first. \\
+   CRITICAL: Do NOT write unit tests. Do NOT write e2e tests. Do NOT run lint. \\
+   Just implement core functionality and verify with console.log. \\"
 else
   MODE_INSTRUCTIONS="MODE: PRODUCTION - Quality code required. Full tests, handle edge cases, maintainable code. \\"
 fi
 
 # Build quality-specific steps
 if [ "$RALPH_MODE" = "prototype" ]; then
-  QUALITY_STEPS="6. Skip linting and extensive testing - just verify it works manually or with minimal smoke test. \\"
+  QUALITY_STEPS="6. DO NOT run tests or lint. Just verify core functionality works (console.log is fine). \\"
 else
   QUALITY_STEPS="6. Run linting if available: npm run lint -- --fix (skip if no lint script) \\
 7. Run unit tests if available: npm test (must pass before completing) \\
