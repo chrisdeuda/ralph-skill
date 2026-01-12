@@ -177,6 +177,19 @@ Run these from any project directory:
 - `~/.claude/skills/ralph/scripts/ralph-once.sh` - Single iteration
 - `~/.claude/skills/ralph/scripts/ralph-afk.sh` - AFK loop
 - `~/.claude/skills/ralph/scripts/ralph-workflow.sh` - Shared workflow
+- `~/.claude/skills/ralph/scripts/ralph-publish-commands.sh` - Publish commands globally
+
+## Publishing Commands
+
+To make Ralph commands available as `/ck:ralph:*` slash commands:
+
+```bash
+~/.claude/skills/ralph/scripts/ralph-publish-commands.sh
+# Or dry-run first:
+~/.claude/skills/ralph/scripts/ralph-publish-commands.sh --dry-run
+```
+
+This syncs commands from the skill to `~/.claude/commands/ralph/` and regenerates the catalog.
 
 ## Installation
 
