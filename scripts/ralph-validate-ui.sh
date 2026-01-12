@@ -1,25 +1,27 @@
 #!/bin/bash
 # Ralph UI Validator - Automated UI verification
-# Uses dev-browser (ARIA snapshot) by default, falls back to vision or playwriter
+# Auto mode priority: playwriter > dev-browser > vision (by efficiency)
 #
 # Usage:
-#   ralph-validate-ui <url> <criteria>              # Auto (dev-browser or vision)
-#   ralph-validate-ui --quick <url> <selectors...>  # Zero tokens - element exists check
-#   ralph-validate-ui --vision <url> <criteria>     # Force vision mode
+#   ralph-validate-ui <url> <criteria>              # Auto (best available mode)
 #   ralph-validate-ui --playwriter <url> <criteria> # Use playwriter MCP (recommended)
+#   ralph-validate-ui --quick <url> <selectors...>  # Zero tokens - element exists check
+#   ralph-validate-ui --vision <url> <criteria>     # Force vision mode (expensive)
+#
+# Environment Variables:
+#   RALPH_DEV_URL       - Default URL (auto-detected from vite/next config)
+#   RALPH_VALIDATE_MODE - Default mode: playwriter, dev-browser, vision, quick
 #
 # Examples:
 #   ralph-validate-ui "http://localhost:5173" "Calculator with Clear History button"
-#   ralph-validate-ui --quick "http://localhost:5173" ".clear-btn" "button:has-text('=')"
-#   ralph-validate-ui --vision "http://localhost:5173" "Modern dark theme UI"
-#   ralph-validate-ui --playwriter "http://localhost:5174" "GHS label with pictograms"
+#   ralph-validate-ui --playwriter "http://localhost:5173" "Number buttons 0-9 visible"
+#   ralph-validate-ui --quick "http://localhost:5173" ".clear-btn" "button"
+#   RALPH_VALIDATE_MODE=playwriter ralph-validate-ui  # Use env var
 #
-# Playwriter Mode (Recommended for Claude Code):
-#   - Uses playwriter MCP for browser automation
-#   - More reliable than dev-browser for complex UIs
-#   - Supports screenshotWithAccessibilityLabels for visual testing
-#   - Handles new tabs/popups (e.g., PDF generation)
-#   - Configure in ~/.claude.json (Claude Code) or ~/.claude/settings.json (Desktop)
+# Mode Efficiency (tokens + speed):
+#   playwriter:   ~50ms, minimal tokens, requires MCP + Chrome extension
+#   dev-browser:  ~100ms, text analysis, requires separate server
+#   vision:       ~3-5s, high tokens, always available (fallback)
 
 set -e
 
@@ -35,6 +37,12 @@ NC='\033[0m'
 
 DEV_BROWSER_DIR="$HOME/.claude/skills/dev-browser"
 DEV_BROWSER_PORT=9222
+PLAYWRITER_PORT=19988
+
+# Check if playwriter MCP is available (WebSocket server running)
+is_playwriter_running() {
+  curl -s --max-time 1 "http://localhost:$PLAYWRITER_PORT" > /dev/null 2>&1
+}
 
 # Auto-detect dev server URL from common configs
 detect_dev_url() {
@@ -251,7 +259,8 @@ EOF
 }
 
 # Parse arguments
-MODE="auto"
+# Support RALPH_VALIDATE_MODE env var (playwriter, dev-browser, vision, quick)
+MODE="${RALPH_VALIDATE_MODE:-auto}"
 URL=""
 CRITERIA=""
 
@@ -305,13 +314,16 @@ case "$MODE" in
     validate_with_playwriter "$URL" "$CRITERIA"
     ;;
   auto)
-    # Try dev-browser first, fall back to vision
-    if is_dev_browser_running; then
+    # Priority: playwriter > dev-browser > vision (by efficiency)
+    if is_playwriter_running; then
+      echo -e "${GREEN}Playwriter detected - using most efficient mode${NC}"
+      echo ""
+      validate_with_playwriter "$URL" "$CRITERIA"
+    elif is_dev_browser_running; then
       validate_with_dev_browser "$URL" "$CRITERIA"
     else
-      echo -e "${YELLOW}dev-browser not running, using vision mode${NC}"
-      echo -e "${YELLOW}Tip: Start with: ~/.claude/skills/dev-browser/server.sh &${NC}"
-      echo -e "${YELLOW}Or use: ralph-validate-ui --playwriter for Claude Code${NC}"
+      echo -e "${YELLOW}No browser automation running, using vision mode${NC}"
+      echo -e "${YELLOW}Tip: Use Playwriter MCP (fastest) or dev-browser${NC}"
       echo ""
       validate_with_vision "$URL" "$CRITERIA"
     fi
