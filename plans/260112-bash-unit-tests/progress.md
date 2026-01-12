@@ -230,3 +230,33 @@ Comprehensive test suite for build_session_name() completed with 23 test cases c
 - Plan name handling: numeric names, kebab-case, special chars
 - Edge cases: empty tasks, mixed tasks, malformed markers
 - All 103 tests passing across five test suites
+
+---
+
+## [260112-bash-unit-tests] Task 12: Add CI integration (GitHub Actions)
+**Status:** In Progress | **Time:** 2026-01-12 17:01 | **Model:** haiku | **Mode:** production
+
+### Plan
+- Create .github/workflows/test.yml for GitHub Actions
+- Configure workflow to run on push to master
+- Install BATS testing framework in CI environment
+- Run bats tests/ command to execute all tests
+- Ensure workflow fails if any tests fail
+- Add workflow badge to README if desired
+
+### Actions
+- 17:01 Created .github/workflows/test.yml with GitHub Actions workflow
+- 17:01 Workflow runs on push to master when scripts or tests change
+- 17:01 Uses macos-latest runner to match development environment
+- 17:01 Installs BATS framework and runs all tests
+- 17:01 Workflow fails if any tests fail (proper CI behavior)
+- 17:01 Includes verbose output on failure for debugging
+
+### Result
+**Status:** Completed | **Completed:** 17:01
+GitHub Actions CI integration completed. Workflow configured to:
+- Run automatically on push to master branch
+- Install BATS testing framework
+- Execute all 103 tests in tests/test-*.bats
+- Report results with verbose output on failure
+- Fail the workflow if any tests fail (prevents merging broken code)

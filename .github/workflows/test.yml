@@ -1,0 +1,47 @@
+name: Run BATS Tests
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'scripts/**'
+      - 'tests/**'
+      - '.github/workflows/test.yml'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'scripts/**'
+      - 'tests/**'
+      - '.github/workflows/test.yml'
+
+jobs:
+  test:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install BATS testing framework
+      run: |
+        brew install bats-core
+
+    - name: Verify BATS installation
+      run: |
+        bats --version
+
+    - name: Run all BATS tests
+      run: |
+        cd ${{ github.workspace }}
+        bats tests/test-*.bats
+
+    - name: Test results summary
+      if: success()
+      run: |
+        echo "✅ All tests passed!"
+        bats tests/test-*.bats --formatter pretty
+
+    - name: Test failure details
+      if: failure()
+      run: |
+        echo "❌ Tests failed. Running with verbose output:"
+        bats tests/test-*.bats --trace || true
