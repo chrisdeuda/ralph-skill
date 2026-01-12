@@ -193,56 +193,66 @@ To make Ralph commands available as `/ck:ralph:*` slash commands:
 
 This syncs commands from the skill to `~/.claude/commands/ralph/` and regenerates the catalog.
 
-## UI Testing with Dev-Browser
+## UI Testing Options
 
-Ralph integrates with dev-browser for fast, token-efficient UI testing. Uses Chrome DevTools Protocol (CDP) instead of screenshots.
+Ralph supports multiple browser automation backends. Choose based on your needs:
 
-### Starting Dev-Browser
+| Method | Latency | Tokens | Best For |
+|--------|---------|--------|----------|
+| **Playwriter** (recommended) | ~50ms | minimal | Production apps, bypasses bot detection |
+| Dev-browser | ~100ms | ~500-2000 | Local dev, ARIA snapshots |
+| Vision | ~3-5s | ~1500-5000 | Visual design validation |
+
+### Option 1: Playwriter (Recommended)
+
+Single MCP tool with full Playwright API. Best for real apps with auth.
+
+**Setup:**
+1. Install [Playwriter Chrome extension](https://chromewebstore.google.com)
+2. Click extension icon on tabs to control (turns green)
+3. Ensure `playwriter` in `~/.claude/settings.json` mcpServers
+
+**Usage via Claude MCP:**
+```
+# In Claude, use playwriter execute tool with Playwright code:
+await page.click("button:has-text('Submit')");
+await page.fill("#email", "test@example.com");
+
+# Screenshot with Vimium-style labels for element discovery:
+await screenshotWithAccessibilityLabels();
+```
+
+**Key advantage:** Can bypass automation detection by disconnecting extension during sensitive operations (Google login, etc).
+
+### Option 2: Dev-Browser
+
+CDP-based with persistent browser state. Good for local development.
 
 ```bash
-# Start the server (required for UI testing)
+# Start server
 ~/.claude/skills/ralph/scripts/ralph-test-ui.sh --start
 
-# Or directly:
-~/.claude/skills/dev-browser/server.sh &
+# Validate UI
+ralph-validate-ui "http://localhost:5173" "Calculator has buttons"
+
+# Interaction test
+ralph-test-ui "http://localhost:5173" 'await page.click("button")'
 ```
 
-### UI Validation (ARIA Snapshot)
+### Option 3: Vision Mode
 
-Validate UI against criteria using text-based ARIA snapshots (~500 tokens vs ~3000 for vision):
-
-```bash
-ralph-validate-ui "http://localhost:5173" "Calculator has number buttons and Clear History"
-ralph-validate-ui --quick "http://localhost:5173" ".display" "button.operator"
-```
-
-### UI Interaction Testing
-
-Run automated interaction tests:
+Screenshot-based validation for visual design criteria.
 
 ```bash
-# Inline test
-ralph-test-ui "http://localhost:5173" 'await page.click("button:has-text(\"AC\")"); return await page.title();'
-
-# Click sequence
-ralph-test-ui --clicks "http://localhost:5173" 'button:has-text("3")' 'button:has-text("+")' 'button:has-text("4")'
+ralph-validate-ui --vision "http://localhost:5173" "Modern dark theme UI"
 ```
 
 ### Using in Checkpoints
 
-Add automated UI validation to checkpoint tasks:
-
 ```markdown
-- [ ] CHECKPOINT: Validate calculator UI
-  - **AC:** `ralph-validate-ui "http://localhost:5173" "All buttons centered, Clear History visible"`
+- [ ] CHECKPOINT: Validate UI
+  - **AC:** `ralph-validate-ui "http://localhost:5173" "All buttons visible"`
 ```
-
-### Speed Comparison
-
-| Method | Latency | Tokens |
-|--------|---------|--------|
-| Dev-browser (ARIA) | ~50-100ms | ~500-2000 |
-| Vision (screenshot) | ~3-5s | ~1500-5000 |
 
 ## Installation
 
