@@ -9,8 +9,9 @@
 #   ralph-validate-ui --vision <url> <criteria>     # Force vision mode (expensive)
 #
 # Environment Variables:
-#   RALPH_DEV_URL       - Default URL (auto-detected from vite/next config)
-#   RALPH_VALIDATE_MODE - Default mode: playwriter, dev-browser, vision, quick
+#   RALPH_DEV_URL            - Default URL (auto-detected from vite/next config)
+#   RALPH_VALIDATE_MODE      - Default mode: playwriter, dev-browser, vision, quick
+#   RALPH_PLAYWRITER_ACTIVATED - Set to "1" to skip activation prompt (for scripting)
 #
 # Examples:
 #   ralph-validate-ui "http://localhost:5173" "Calculator with Clear History button"
@@ -42,6 +43,75 @@ PLAYWRITER_PORT=19988
 # Check if playwriter MCP is available (WebSocket server running)
 is_playwriter_running() {
   curl -s --max-time 1 "http://localhost:$PLAYWRITER_PORT" > /dev/null 2>&1
+}
+
+# Prompt user to activate Playwriter extension with macOS dialog
+# Always shown at start of Playwriter mode to ensure extension is ready
+prompt_playwriter_activation() {
+  local url="$1"
+  local skip_if_confirmed="${2:-false}"
+
+  # Check if RALPH_PLAYWRITER_ACTIVATED env var is set (skip prompt)
+  if [ "$skip_if_confirmed" = "true" ] && [ "${RALPH_PLAYWRITER_ACTIVATED:-}" = "1" ]; then
+    echo -e "${GREEN}✓ Playwriter activation confirmed (RALPH_PLAYWRITER_ACTIVATED=1)${NC}"
+    return 0
+  fi
+
+  echo -e "${YELLOW}🎭 Playwriter Setup Required${NC}"
+  echo ""
+  echo "Before validation can proceed:"
+  echo "  1. Open Chrome and navigate to: $url"
+  echo "  2. Click the Playwriter extension icon (puzzle piece → Playwriter)"
+  echo "  3. The extension icon should turn active/colored"
+  echo ""
+
+  # Show macOS dialog popup
+  local dialog_result
+  dialog_result=$(osascript <<EOF 2>/dev/null
+display dialog "Playwriter Extension Activation
+
+1. Open Chrome and go to:
+   $url
+
+2. Click the Playwriter extension icon
+   (puzzle piece menu → Playwriter)
+
+3. Click 'Ready' when the extension is active" ¬
+  with title "Ralph UI Validator - Setup" ¬
+  buttons {"Cancel", "Ready"} ¬
+  default button "Ready" ¬
+  with icon note
+return button returned of result
+EOF
+  )
+
+  if [ "$dialog_result" != "Ready" ]; then
+    echo -e "${RED}Setup cancelled${NC}"
+    return 1
+  fi
+
+  echo -e "${GREEN}✓ User confirmed Playwriter activation${NC}"
+  echo ""
+
+  # Set env var so subsequent calls in same session skip prompt
+  export RALPH_PLAYWRITER_ACTIVATED=1
+  return 0
+}
+
+# Ensure Playwriter is ready for validation (server + prompt user)
+ensure_playwriter_ready() {
+  local url="$1"
+
+  # Check server first
+  if ! is_playwriter_running; then
+    echo -e "${RED}Playwriter MCP server not running (port $PLAYWRITER_PORT)${NC}"
+    echo "Start Claude Code with Playwriter MCP configured"
+    return 1
+  fi
+
+  # Prompt user to activate (unless already confirmed this session)
+  prompt_playwriter_activation "$url" "true"
+  return $?
 }
 
 # Auto-detect dev server URL from common configs
@@ -175,6 +245,15 @@ validate_with_playwriter() {
 
   echo -e "${YELLOW}🎭 Using Playwriter MCP mode...${NC}"
   echo ""
+
+  # Pre-flight check: ensure Playwriter is ready
+  if ! ensure_playwriter_ready "$url"; then
+    echo -e "${RED}Playwriter not ready - falling back to vision mode${NC}"
+    echo ""
+    validate_with_vision "$url" "$criteria"
+    return $?
+  fi
+
   echo "This mode requires Claude to execute playwriter commands."
   echo ""
   echo -e "${BLUE}Instructions for Claude:${NC}"
@@ -316,7 +395,7 @@ case "$MODE" in
   auto)
     # Priority: playwriter > dev-browser > vision (by efficiency)
     if is_playwriter_running; then
-      echo -e "${GREEN}Playwriter detected - using most efficient mode${NC}"
+      echo -e "${GREEN}Playwriter server detected - checking tab connection...${NC}"
       echo ""
       validate_with_playwriter "$URL" "$CRITERIA"
     elif is_dev_browser_running; then
