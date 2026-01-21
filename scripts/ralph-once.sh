@@ -112,6 +112,10 @@ else
   log_task_complete "$NEXT_TASK" "completed" "Iteration finished" "$PLAN_DIR"
 fi
 
+# Capture screenshot after task completion (if configured)
+TASK_SLUG=$(echo "$NEXT_TASK" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | cut -c1-30)
+capture_screenshot "after-${TASK_SLUG}"
+
 COMPLETED_COUNT=$(grep -c "^\- \[x\]" "$TASKS_FILE" 2>/dev/null || echo "0")
 REMAINING_COUNT=$(grep -c "^\- \[ \]" "$TASKS_FILE" 2>/dev/null || echo "0")
 notify "Ralph Task Done ✅" "Plan: $PLAN_NAME

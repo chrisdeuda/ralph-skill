@@ -24,6 +24,58 @@ ACTIVITY_LOG="$PLAN_DIR/activity.log"
 # Global log file (for watching all plans)
 GLOBAL_LOG="plans/ralph-log.md"
 
+# Screenshot configuration
+# Read from tasks.md header: <!-- screenshot-url: http://localhost:8080/?screen=my-screen -->
+# Output dir: design-match-output/<plan-name>/
+SCREENSHOT_URL=""
+SCREENSHOT_DIR=""
+
+# Parse screenshot config from tasks.md
+parse_screenshot_config() {
+  if [ -f "$TASKS_FILE" ]; then
+    # Look for: <!-- screenshot-url: URL -->
+    SCREENSHOT_URL=$(grep -oE '<!-- screenshot-url: [^>]+ -->' "$TASKS_FILE" 2>/dev/null | sed 's/<!-- screenshot-url: //;s/ -->//' | head -1)
+    if [ -n "$SCREENSHOT_URL" ]; then
+      SCREENSHOT_DIR="design-match-output/$PLAN_NAME"
+      mkdir -p "$SCREENSHOT_DIR" 2>/dev/null || true
+    fi
+  fi
+}
+
+# Capture screenshot with auto-incrementing number
+# Usage: capture_screenshot "after-task1"
+capture_screenshot() {
+  local suffix="${1:-checkpoint}"
+
+  # Skip if no screenshot URL configured
+  if [ -z "$SCREENSHOT_URL" ] || [ -z "$SCREENSHOT_DIR" ]; then
+    return 0
+  fi
+
+  # Check if agent-browser is available
+  if ! command -v agent-browser &> /dev/null; then
+    echo "⚠️  agent-browser not found, skipping screenshot"
+    return 0
+  fi
+
+  # Count existing screenshots for numbering
+  local count=$(ls "$SCREENSHOT_DIR"/*.png 2>/dev/null | wc -l | tr -d ' ')
+  local num=$(printf '%02d' "$count")
+  local filename="$SCREENSHOT_DIR/${num}-${suffix}.png"
+
+  echo "📸 Capturing screenshot: $filename"
+  agent-browser open "$SCREENSHOT_URL" 2>/dev/null || true
+  sleep 2
+  agent-browser screenshot "$filename" 2>/dev/null || {
+    echo "⚠️  Screenshot capture failed (agent-browser not connected?)"
+    return 0
+  }
+  echo "✅ Screenshot saved: $filename"
+}
+
+# Initialize screenshot config on load
+parse_screenshot_config
+
 # Extract plan name from path (e.g., "260109-1500-my-feature")
 PLAN_NAME=$(basename "$PLAN_DIR")
 
