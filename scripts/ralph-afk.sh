@@ -84,11 +84,16 @@ for ((i=1; i<=$ITERATIONS; i++)); do
   if [ -z "$NEXT_TASK" ]; then
     echo "No more tasks found."
     COMPLETED_COUNT=$(grep -c "^\- \[x\]" "$TASKS_FILE" 2>/dev/null || echo "0")
+    log_task_complete "All tasks" "completed" "All $COMPLETED_COUNT tasks done" "$PLAN_DIR"
     notify "Ralph Complete ✅" "Plan: $PLAN_NAME
 Tasks completed: $COMPLETED_COUNT
 All tasks done!"
     exit 0
   fi
+
+  # Log iteration start (programmatic)
+  log_task_start "$NEXT_TASK" "$MODEL" "$RALPH_MODE" "$PLAN_DIR" "$PLAN_NAME"
+  log_iteration "$i" "$ITERATIONS" "$NEXT_TASK" "$PLAN_DIR"
 
   # CHECKPOINT DETECTION - pause for manual verification
   if [ "$IS_CHECKPOINT" = "yes" ]; then
@@ -138,6 +143,9 @@ EOF
     kill_and_cleanup "$CHECKPOINT_PID"
     echo "🧹 Cleaned up checkpoint process"
 
+    # Log checkpoint pause (programmatic)
+    log_task_complete "$NEXT_TASK" "blocked" "CHECKPOINT: Paused for manual verification" "$PLAN_DIR"
+
     echo ""
     echo "✋ Ralph paused at checkpoint."
     echo ""
@@ -165,11 +173,19 @@ EOF
 
   echo "$result"
 
+  # Log task completion (programmatic)
+  if echo "$result" | grep -q "TASK_BLOCKED\|ERROR\|error"; then
+    log_task_complete "$NEXT_TASK" "blocked" "Task encountered issues" "$PLAN_DIR"
+  else
+    log_task_complete "$NEXT_TASK" "completed" "Iteration $i completed" "$PLAN_DIR"
+  fi
+
   # Check for unique completion signal (not partial matches)
   if [[ "$result" == *"ALL_TASKS_DONE"* ]]; then
     echo ""
     echo "All tasks complete after $i iterations."
     COMPLETED_COUNT=$(grep -c "^\- \[x\]" "$TASKS_FILE" 2>/dev/null || echo "0")
+    log_task_complete "All tasks" "completed" "All $COMPLETED_COUNT tasks completed in $i iterations" "$PLAN_DIR"
     notify "Ralph Complete ✅" "Plan: $PLAN_NAME
 Tasks completed: $COMPLETED_COUNT
 Iterations used: $i of $ITERATIONS
@@ -182,6 +198,10 @@ echo ""
 echo "Reached iteration limit ($ITERATIONS). Check progress.md for status."
 COMPLETED_COUNT=$(grep -c "^\- \[x\]" "$TASKS_FILE" 2>/dev/null || echo "0")
 REMAINING_COUNT=$(grep -c "^\- \[ \]" "$TASKS_FILE" 2>/dev/null || echo "0")
+
+# Log iteration limit reached (programmatic)
+log_task_complete "Session" "blocked" "Iteration limit ($ITERATIONS) reached. $COMPLETED_COUNT done, $REMAINING_COUNT remaining" "$PLAN_DIR"
+
 notify "Ralph Paused ⏸️" "Plan: $PLAN_NAME
 Completed: $COMPLETED_COUNT tasks
 Remaining: $REMAINING_COUNT tasks

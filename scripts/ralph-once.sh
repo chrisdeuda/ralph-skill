@@ -81,14 +81,30 @@ All $COMPLETED_COUNT tasks already complete!"
   exit 0
 fi
 
+# Log task start (programmatic)
+log_task_start "$NEXT_TASK" "$MODEL" "$RALPH_MODE" "$PLAN_DIR" "$PLAN_NAME"
+
 # Run Claude with PID tracking
-claude --model "$MODEL" --dangerously-skip-permissions -p "$RALPH_WORKFLOW $RALPH_COMPLETE_MSG" &
+OUTPUT_FILE=$(mktemp)
+claude --model "$MODEL" --dangerously-skip-permissions -p "$RALPH_WORKFLOW $RALPH_COMPLETE_MSG" > "$OUTPUT_FILE" 2>&1 &
 CLAUDE_PID=$!
 track_pid "$CLAUDE_PID"
 wait $CLAUDE_PID || true
+RESULT=$(cat "$OUTPUT_FILE")
+rm -f "$OUTPUT_FILE"
+
 # Kill and cleanup after task completion
 kill_and_cleanup "$CLAUDE_PID"
 echo "🧹 Cleaned up task process (PID: $CLAUDE_PID)"
+
+# Log task completion (programmatic)
+if echo "$RESULT" | grep -q "ALL_TASKS_DONE\|TASK_COMPLETE"; then
+  log_task_complete "$NEXT_TASK" "completed" "Task completed successfully" "$PLAN_DIR"
+elif echo "$RESULT" | grep -q "TASK_BLOCKED\|ERROR\|error"; then
+  log_task_complete "$NEXT_TASK" "blocked" "Task encountered issues" "$PLAN_DIR"
+else
+  log_task_complete "$NEXT_TASK" "completed" "Iteration finished" "$PLAN_DIR"
+fi
 
 COMPLETED_COUNT=$(grep -c "^\- \[x\]" "$TASKS_FILE" 2>/dev/null || echo "0")
 REMAINING_COUNT=$(grep -c "^\- \[ \]" "$TASKS_FILE" 2>/dev/null || echo "0")

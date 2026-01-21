@@ -22,6 +22,10 @@ PID_FILE="$HOME/.ralph-pids"
 RALPH_AGENT_ID="${RALPH_AGENT_ID:-ralph}"
 HEARTBEAT_INTERVAL=30
 
+# Progress logging
+PROGRESS_FILE="plans/progress.md"
+GLOBAL_LOG="plans/ralph-log.md"
+
 # Track Claude PID for ralph-kill
 track_pid() {
   echo "$1" >> "$PID_FILE"
@@ -189,6 +193,57 @@ sync_beads() {
   bd sync 2>/dev/null || true
 }
 
+# Log task start to progress.md and ralph-log.md
+log_task_start() {
+  local task_id="$1"
+  local task_title="$2"
+  local model="$3"
+  local mode="$4"
+  local timestamp=$(date +'%Y-%m-%d %H:%M')
+
+  # Ensure plans directory exists
+  mkdir -p plans
+
+  # Log to progress.md
+  cat >> "$PROGRESS_FILE" << EOF
+
+---
+## [$task_id] $task_title
+**Status:** In Progress | **Time:** $timestamp | **Model:** $model | **Mode:** $mode
+EOF
+
+  # Log to global ralph-log.md
+  cat >> "$GLOBAL_LOG" << EOF
+
+---
+## [$task_id] $task_title
+**Status:** In Progress | **Time:** $timestamp | **Model:** $model | **Mode:** $mode
+EOF
+}
+
+# Log task completion to progress.md and ralph-log.md
+log_task_complete() {
+  local task_id="$1"
+  local result="$2"
+  local timestamp=$(date +'%H:%M')
+
+  # Log to progress.md
+  cat >> "$PROGRESS_FILE" << EOF
+
+### Result
+**Status:** Completed | **Completed:** $timestamp
+$result
+EOF
+
+  # Log to global ralph-log.md
+  cat >> "$GLOBAL_LOG" << EOF
+
+### Result
+**Status:** Completed | **Completed:** $timestamp
+$result
+EOF
+}
+
 # Main function
 main() {
   local iterations="${1:-5}"
@@ -239,8 +294,9 @@ main() {
     fi
     echo "Model: $MODEL"
 
-    # Claim task
+    # Claim task and log start
     claim_task "$TASK_ID"
+    log_task_start "$TASK_ID" "$TASK_TITLE" "$MODEL" "$mode"
     send_heartbeat
 
     # Build prompt
@@ -265,21 +321,23 @@ main() {
     kill_and_cleanup "$CLAUDE_PID"
     echo "$RESULT"
 
-    # Check result
+    # Check result and log completion
     if echo "$RESULT" | grep -q "TASK_COMPLETE"; then
       echo "Task $TASK_ID completed."
+      log_task_complete "$TASK_ID" "Task completed successfully"
       complete_task "$TASK_ID" "Completed by Ralph"
       notify_task_done "$TASK_TITLE"
     elif echo "$RESULT" | grep -q "TASK_BLOCKED"; then
       BLOCK_REASON=$(echo "$RESULT" | grep -oP 'TASK_BLOCKED: \K.*' | head -1)
       echo "Task $TASK_ID blocked: $BLOCK_REASON"
+      log_task_complete "$TASK_ID" "BLOCKED: $BLOCK_REASON"
       bd update "$TASK_ID" --status blocked --json 2>/dev/null || true
       bd agent state "$RALPH_AGENT_ID" stuck 2>/dev/null || true
       notify_checkpoint "Task blocked: $BLOCK_REASON"
       release_task
     else
       echo "Task iteration complete (no explicit signal)"
-      # Assume success, complete the task
+      log_task_complete "$TASK_ID" "Iteration complete (implicit success)"
       complete_task "$TASK_ID" "Iteration complete"
     fi
 
