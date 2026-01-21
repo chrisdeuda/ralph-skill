@@ -44,19 +44,62 @@ get_phase_files() {
 }
 
 # Model selection based on task keywords
+# Strategy: Claude for planning/complex, GLM for implementation/execution
+# Returns: model identifier (glm, kimi, haiku, sonnet, opus)
 detect_model() {
   local task="$1"
 
-  # Simple tasks -> Haiku (cheapest)
-  if echo "$task" | grep -qiE "lint|test|fix|style|docs|mark|clean|format|reset|clear"; then
-    echo "haiku"
-  # Complex tasks -> Opus (most capable)
-  elif echo "$task" | grep -qiE "debug|architect|refactor.*complex|multi-file|restructure"; then
+  # Check for explicit provider tag in task: [GLM], [CLAUDE], [KIMI], [OPUS]
+  if echo "$task" | grep -qiE "\[GLM\]"; then
+    echo "glm"
+    return
+  elif echo "$task" | grep -qiE "\[KIMI\]"; then
+    echo "kimi"
+    return
+  elif echo "$task" | grep -qiE "\[OPUS\]"; then
     echo "opus"
-  # Default medium tasks -> Sonnet
+    return
+  elif echo "$task" | grep -qiE "\[SONNET\]|\[CLAUDE\]"; then
+    echo "sonnet"
+    return
+  fi
+
+  # Auto-detect based on keywords
+  # PLANNING/COMPLEX → Claude (smarter, better reasoning)
+  if echo "$task" | grep -qiE "plan|architect|design|debug|restructure|refactor.*complex|multi-file|analyze"; then
+    echo "opus"
+  # IMPLEMENTATION/EXECUTION → GLM (cheaper, good enough)
+  elif echo "$task" | grep -qiE "implement|create|add|build|lint|test|fix|style|docs|clean|format|reset|clear|update|write"; then
+    echo "glm"
+  # Default → Claude Sonnet (safe middle ground)
   else
     echo "sonnet"
   fi
+}
+
+# Build ccs command args from model
+# Input: model (glm, kimi, haiku, sonnet, opus)
+# Output: ccs profile and args
+build_ccs_args() {
+  local model="$1"
+
+  case "$model" in
+    glm)
+      echo "glm"
+      ;;
+    kimi)
+      echo "kimi"
+      ;;
+    haiku)
+      echo "--model haiku"
+      ;;
+    opus)
+      echo "--model opus"
+      ;;
+    sonnet|*)
+      echo "--model sonnet"
+      ;;
+  esac
 }
 
 # Get next incomplete task from tasks.md
@@ -148,10 +191,11 @@ is_checkpoint() {
 TASK_SOURCE=$(detect_task_source)
 NEXT_TASK=$(get_next_task)
 RALPH_MODEL=$(detect_model "$NEXT_TASK")
+CCS_ARGS=$(build_ccs_args "$RALPH_MODEL")
 FILE_REFS=$(build_file_refs)
 SESSION_NAME=$(build_session_name)
 IS_CHECKPOINT=$(is_checkpoint "$NEXT_TASK" && echo "yes" || echo "no")
-export TASK_SOURCE NEXT_TASK RALPH_MODEL PLAN_DIR PROGRESS_FILE TASKS_FILE RALPH_MODE GLOBAL_LOG PLAN_NAME IS_CHECKPOINT SESSION_NAME GUARDRAILS_FILE ERRORS_LOG ACTIVITY_LOG
+export TASK_SOURCE NEXT_TASK RALPH_MODEL CCS_ARGS PLAN_DIR PROGRESS_FILE TASKS_FILE RALPH_MODE GLOBAL_LOG PLAN_NAME IS_CHECKPOINT SESSION_NAME GUARDRAILS_FILE ERRORS_LOG ACTIVITY_LOG
 
 # Context instructions (if context.md exists)
 CONTEXT_INSTRUCTIONS=""

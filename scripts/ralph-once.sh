@@ -55,9 +55,12 @@ fi
 # Load workflow
 source "$SCRIPT_DIR/ralph-workflow.sh"
 
-# Determine model
+# Determine model and ccs args
 if [ -n "$MODEL_OVERRIDE" ]; then
   MODEL="$MODEL_OVERRIDE"
+  # Rebuild CCS_ARGS for override
+  source "$SCRIPT_DIR/ralph-workflow.sh"
+  CCS_ARGS=$(build_ccs_args "$MODEL")
 else
   MODEL="$RALPH_MODEL"
 fi
@@ -71,6 +74,7 @@ echo "Source: $TASK_SOURCE"
 echo "Mode: $RALPH_MODE"
 echo "Next task: $NEXT_TASK"
 echo "Model: $MODEL (auto-detected: $RALPH_MODEL)"
+echo "CCS args: $CCS_ARGS"
 echo "========================="
 
 if [ -z "$NEXT_TASK" ]; then
@@ -84,9 +88,11 @@ fi
 # Log task start (programmatic)
 log_task_start "$NEXT_TASK" "$MODEL" "$RALPH_MODE" "$PLAN_DIR" "$PLAN_NAME"
 
-# Run Claude with PID tracking
+# Run with ccs (multi-provider support)
+# CCS_ARGS is either a profile (glm, kimi) or model flag (--model sonnet)
 OUTPUT_FILE=$(mktemp)
-claude --model "$MODEL" --dangerously-skip-permissions -p "$RALPH_WORKFLOW $RALPH_COMPLETE_MSG" > "$OUTPUT_FILE" 2>&1 &
+echo "Running: ccs $CCS_ARGS --dangerously-skip-permissions -p ..."
+ccs $CCS_ARGS --dangerously-skip-permissions -p "$RALPH_WORKFLOW $RALPH_COMPLETE_MSG" > "$OUTPUT_FILE" 2>&1 &
 CLAUDE_PID=$!
 track_pid "$CLAUDE_PID"
 wait $CLAUDE_PID || true

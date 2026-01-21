@@ -69,14 +69,17 @@ for ((i=1; i<=$ITERATIONS; i++)); do
 
   if [ "$MODEL_OVERRIDE" = "auto" ]; then
     MODEL="$RALPH_MODEL"
+    CCS_ARGS_ITER="$CCS_ARGS"
   else
     MODEL="$MODEL_OVERRIDE"
+    CCS_ARGS_ITER=$(build_ccs_args "$MODEL")
   fi
 
   echo ""
   echo "=== Iteration $i of $ITERATIONS ==="
   echo "Task: $NEXT_TASK"
   echo "Model: $MODEL"
+  echo "CCS args: $CCS_ARGS_ITER"
   echo "Mode: $RALPH_MODE"
   echo "Checkpoint: $IS_CHECKPOINT"
   echo "=================================="
@@ -126,7 +129,8 @@ EOF
     # say "Checkpoint reached. Please verify the prototype works." 2>/dev/null &
 
     # Mark checkpoint as complete and log it (with PID tracking)
-    claude --model haiku --dangerously-skip-permissions -p "@$PROGRESS_FILE @$TASKS_FILE
+    # Use GLM for simple checkpoint logging (cheaper)
+    ccs glm --dangerously-skip-permissions -p "@$PROGRESS_FILE @$TASKS_FILE
     This is a CHECKPOINT task. Do the following:
     1. Append to progress.md:
        ---
@@ -158,9 +162,10 @@ EOF
     exit 0
   fi
 
-  # Run Claude with PID tracking
+  # Run with ccs (multi-provider support)
   OUTPUT_FILE=$(mktemp)
-  claude --model "$MODEL" --dangerously-skip-permissions -p "$RALPH_WORKFLOW $RALPH_COMPLETE_MSG" > "$OUTPUT_FILE" 2>&1 &
+  echo "Running: ccs $CCS_ARGS_ITER --dangerously-skip-permissions -p ..."
+  ccs $CCS_ARGS_ITER --dangerously-skip-permissions -p "$RALPH_WORKFLOW $RALPH_COMPLETE_MSG" > "$OUTPUT_FILE" 2>&1 &
   CLAUDE_PID=$!
   track_pid "$CLAUDE_PID"
   wait $CLAUDE_PID || true
