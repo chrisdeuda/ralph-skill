@@ -77,17 +77,36 @@ ralph-afk plans/260109-my-feature/ 5
 ralph-afk plans/260109-my-feature/ 10 haiku
 ```
 
-## Model Selection
+## Model Selection (Multi-Provider via CCS)
 
-Ralph auto-selects models based on task keywords:
+Ralph uses `ccs` (Claude Code Switcher) for multi-provider support:
 
-| Keywords | Model | Cost |
-|----------|-------|------|
-| lint, test, fix, docs, clean, format | Haiku | $ |
-| implement, create, add, build | Sonnet | $$ |
-| debug, architect, refactor, restructure | Opus | $$$ |
+| Keywords | Provider | Cost |
+|----------|----------|------|
+| plan, architect, design, debug, analyze | Claude Opus | $$$ |
+| implement, create, add, build, lint, test, fix, docs, clean, format, update, write | GLM | ¢ |
+| (default) | Claude Sonnet | $$ |
 
-Override with second argument: `ralph-once <plan> opus`
+**Strategy**: Claude for planning/complex reasoning, GLM for implementation/execution.
+
+### Explicit Provider Tags
+
+Force a specific provider by adding tags to task descriptions:
+
+```markdown
+- [ ] [GLM] Implement the login form
+- [ ] [OPUS] Debug the authentication flow
+- [ ] [SONNET] Add error handling
+- [ ] [KIMI] Write documentation
+```
+
+### Override via CLI
+
+```bash
+ralph-once <plan> glm           # Force GLM for all
+ralph-once <plan> opus          # Force Claude Opus
+ralph-afk <plan> 5 auto         # Auto-select per task (default)
+```
 
 ## Task File Format (tasks.md)
 
